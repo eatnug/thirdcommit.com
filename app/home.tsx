@@ -23,8 +23,6 @@ export default function HomePage() {
 
   return (
     <>
-      <a className="skip-link" href="#main">Skip to content</a>
-
       <main id="main">
         <div className="container viewport">
           <div className="grid-simple">
