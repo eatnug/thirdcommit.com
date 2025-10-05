@@ -9,3 +9,11 @@ export interface Post {
   readingTime: string
   draft: boolean
 }
+
+export interface PostFormData {
+  title: string
+  description: string
+  tags: string
+  content: string
+  draft: boolean
+}

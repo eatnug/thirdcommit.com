@@ -128,6 +128,22 @@ ${data.content}
     }
   }
 
+  async deletePost(slug: string): Promise<void> {
+    const [fs, path] = await Promise.all([
+      import('fs'),
+      import('path')
+    ])
+
+    const postsDir = path.join(process.cwd(), 'src/storage', 'posts')
+    const filePath = path.join(postsDir, `${slug}.md`)
+
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`Post ${slug} not found`)
+    }
+
+    fs.unlinkSync(filePath)
+  }
+
   private generateSlug(title: string): string {
     return title
       .toLowerCase()

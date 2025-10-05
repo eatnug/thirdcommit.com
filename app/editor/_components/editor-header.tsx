@@ -1,4 +1,4 @@
-import { Button } from '@/app/_lib/components/ui/button'
+import { Button } from '@/app/_components/button'
 
 interface EditorHeaderProps {
   lastAutosave: number | null

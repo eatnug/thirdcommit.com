@@ -1,8 +1,8 @@
-import { Button } from '@/app/_lib/components/ui/button'
-import type { Draft } from '@/features/editor/core/entities/draft.entity'
+import { Button } from '@/app/_components/button'
+import type { Post } from '@/features/blog/core/entities/post.entity'
 
 interface DraftsDropdownProps {
-  drafts: Draft[]
+  drafts: Post[]
   loading: boolean
   currentDraftSlug: string | null
   isOpen: boolean
@@ -63,7 +63,7 @@ export function DraftsDropdown({
                     <h4 className="font-medium text-sm truncate">
                       {draft.title}
                     </h4>
-                    <p className="text-xs text-gray-500">{draft.date}</p>
+                    <p className="text-xs text-gray-500">{draft.date.toString()}</p>
                     {draft.tags.length > 0 && (
                       <div className="flex gap-1 mt-1 flex-wrap">
                         {draft.tags.slice(0, 3).map((tag, i) => (

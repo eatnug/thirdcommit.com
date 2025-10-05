@@ -18,7 +18,7 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const matter = require('gray-matter')
 
-    const postsDir = path.join(process.cwd(), 'content', 'posts')
+    const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
 
     if (!fs.existsSync(postsDir)) {
       return NextResponse.json({ drafts: [] })

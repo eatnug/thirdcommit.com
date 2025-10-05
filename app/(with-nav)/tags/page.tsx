@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { getAllTagsUseCase } from '@/features/blog/core/use-cases/get-all-tags.use-case'
 import { getPostsByTagUseCase } from '@/features/blog/core/use-cases/get-posts-by-tag.use-case'
-import { Badge } from '@/app/_lib/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/app/_lib/components/ui/card'
+import { Badge } from '@/app/_components/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/_components/card'
 
 export default async function TagsPage() {
   const tags = await getAllTagsUseCase()

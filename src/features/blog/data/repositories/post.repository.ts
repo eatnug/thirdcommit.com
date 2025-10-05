@@ -1,16 +1,16 @@
 import type { IPostRepository } from '@/features/blog/core/ports/post-repository.port'
 import { FileSystemPostRepository } from './post.filesystem.repository'
+import { ApiPostRepository } from './post.api.repository'
 
 /**
  * Repository Provider
  *
- * This file acts as a provider/factory for the post repository.
- * Switch implementations here without changing use-cases.
- *
- * Available implementations:
- * - FileSystemPostRepository (local markdown files)
- * - ApiPostRepository (future: REST API)
- * - CachePostRepository (future: cached wrapper)
+ * Automatically selects the appropriate repository based on environment:
+ * - Server-side: FileSystemPostRepository (direct filesystem access)
+ * - Client-side: ApiPostRepository (fetch through API endpoints)
  */
+const isServer = typeof window === 'undefined'
 
-export const postRepository: IPostRepository = new FileSystemPostRepository()
+export const postRepository: IPostRepository = isServer
+  ? new FileSystemPostRepository()
+  : new ApiPostRepository()

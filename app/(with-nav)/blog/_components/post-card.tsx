@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/_lib/components/ui/card'
-import { Badge } from '@/app/_lib/components/ui/badge'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/_components/card'
+import { Badge } from '@/app/_components/badge'
 import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Post } from '@/features/blog/core/entities/post.entity'

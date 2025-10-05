@@ -30,4 +30,9 @@ export interface IPostRepository {
     content: string
     draft: boolean
   }): Promise<{ slug: string; filename: string; path: string }>
+
+  /**
+   * Delete a post by its slug
+   */
+  deletePost(slug: string): Promise<void>
 }

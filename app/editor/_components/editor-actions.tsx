@@ -1,5 +1,5 @@
-import { Button } from '@/app/_lib/components/ui/button'
-import { Card } from '@/app/_lib/components/ui/card'
+import { Button } from '@/app/_components/button'
+import { Card } from '@/app/_components/card'
 
 interface EditorActionsProps {
   isSaving: boolean

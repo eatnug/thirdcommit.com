@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import { getAllTagsUseCase } from '@/features/blog/core/use-cases/get-all-tags.use-case'
 import { getPostsByTagUseCase } from '@/features/blog/core/use-cases/get-posts-by-tag.use-case'
 import { PostCard } from '@/app/(with-nav)/blog/_components/post-card'
-import { Badge } from '@/app/_lib/components/ui/badge'
+import { Badge } from '@/app/_components/badge'
 
 export async function generateStaticParams() {
   const tags = await getAllTagsUseCase()

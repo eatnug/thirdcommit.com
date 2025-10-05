@@ -22,7 +22,7 @@ export async function GET(
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const matter = require('gray-matter')
 
-    const postsDir = path.join(process.cwd(), 'content', 'posts')
+    const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
     const filePath = path.join(postsDir, `${slug}.md`)
 
     if (!fs.existsSync(filePath)) {
@@ -71,7 +71,7 @@ export async function DELETE(
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const path = require('path')
 
-    const postsDir = path.join(process.cwd(), 'content', 'posts')
+    const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
     const filePath = path.join(postsDir, `${slug}.md`)
 
     if (!fs.existsSync(filePath)) {
