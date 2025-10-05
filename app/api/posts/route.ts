@@ -1,15 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { postRepository } from '@/features/blog/data/repositories/post.repository'
-
-/**
- * Primary/Driving Adapter for creating posts
- * This is an API route adapter that drives the application through the use case
- *
- * In hexagonal architecture:
- * - This is a PRIMARY ADAPTER (driving the application)
- * - It translates HTTP requests into use case calls
- * - Only available in development mode
- */
 
 const isDev = process.env.NODE_ENV === 'development'
 
@@ -22,7 +11,6 @@ interface PostData {
 }
 
 export async function POST(request: NextRequest) {
-  // Block in production
   if (!isDev) {
     return NextResponse.json(
       { error: 'API routes are only available in development' },
@@ -33,7 +21,6 @@ export async function POST(request: NextRequest) {
   try {
     const data: PostData = await request.json()
 
-    // Validation
     if (!data.title || !data.content) {
       return NextResponse.json(
         { error: 'Title and content are required' },
@@ -41,28 +28,60 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use the repository to create post (goes through the port)
-    const result = await postRepository.createPost({
-      title: data.title,
-      description: data.description,
-      tags: data.tags,
-      content: data.content,
-      draft: data.draft,
-    })
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const fs = require('fs')
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const path = require('path')
+
+    const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
+
+    if (!fs.existsSync(postsDir)) {
+      fs.mkdirSync(postsDir, { recursive: true })
+    }
+
+    const slug = data.title
+      .toLowerCase()
+      .replace(/[^a-z0-9가-힣]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+    const filename = `${slug}.md`
+    const filePath = path.join(postsDir, filename)
+
+    if (fs.existsSync(filePath)) {
+      return NextResponse.json(
+        { error: `File ${filename} already exists` },
+        { status: 409 }
+      )
+    }
+
+    const frontmatter = [
+      '---',
+      `title: "${data.title}"`,
+      data.description ? `description: "${data.description}"` : '',
+      `tags: [${data.tags.map(tag => `"${tag}"`).join(', ')}]`,
+      `date: "${new Date().toISOString()}"`,
+      `draft: ${data.draft}`,
+      '---',
+      '',
+      data.content,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    fs.writeFileSync(filePath, frontmatter, 'utf8')
 
     return NextResponse.json(
       {
         success: true,
-        filename: result.filename,
-        path: result.path,
-        slug: result.slug,
+        filename,
+        path: filePath,
+        slug,
       },
       { status: 201 }
     )
   } catch (error) {
     console.error('Error saving post:', error)
 
-    // Handle duplicate file error
     if (error instanceof Error && error.message.includes('already exists')) {
       return NextResponse.json(
         { error: error.message },
