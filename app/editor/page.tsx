@@ -6,6 +6,7 @@ import { Card } from '@/app/_lib/components/ui/card'
 import { useEditorState } from '@/features/editor/hooks/use-editor-state'
 import { savePostUseCase } from '@/features/blog/core/use-cases/save-post.use-case'
 import { renderMarkdownUseCase } from '@/features/editor/core/use-cases/render-markdown.use-case'
+import { useMutationWrapper } from '@/shared/hooks'
 import { debounce } from '@/shared/utils'
 
 export default function EditorPage() {
@@ -16,8 +17,18 @@ export default function EditorPage() {
     clearAutosave,
   } = useEditorState()
 
-  const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+
+  const savePostMutation = useMutationWrapper(savePostUseCase, {
+    onSuccess: async (result) => {
+      setMessage(`✅ Saved: ${result.filename}`)
+      await clearAutosave()
+      fetchDrafts()
+    },
+    onError: (error) => {
+      setMessage(`❌ Failed to save: ${error}`)
+    },
+  })
 
   // Preview state
   const [showPreview, setShowPreview] = useState(false)
@@ -104,7 +115,7 @@ export default function EditorPage() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
-        if (!saving && formData.title && formData.content) {
+        if (!savePostMutation.isPending && formData.title && formData.content) {
           handleSave()
         }
       }
@@ -113,27 +124,16 @@ export default function EditorPage() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saving, formData.title, formData.content])
+  }, [savePostMutation.isPending, formData.title, formData.content])
 
-  const handleSave = async (asDraft: boolean = false) => {
-    setSaving(true)
+  const handleSave = (asDraft: boolean = false) => {
     setMessage('')
-
-    try {
-      const dataToSave = { ...formData, draft: asDraft }
-      const result = await savePostUseCase(dataToSave)
-      setMessage(`✅ Saved: ${result.filename}`)
-      // Clear autosave after successful save
-      await clearAutosave()
-      // Refresh drafts list
-      fetchDrafts()
-      // Update form data with the draft status
-      updateFormData({ draft: asDraft })
-    } catch (error) {
-      setMessage(`❌ Failed to save: ${error}`)
-    } finally {
-      setSaving(false)
-    }
+    const dataToSave = { ...formData, draft: asDraft }
+    savePostMutation.mutate(dataToSave, {
+      onSuccess: () => {
+        updateFormData({ draft: asDraft })
+      },
+    })
   }
 
   const loadDraft = async (slug: string) => {
@@ -474,21 +474,21 @@ export default function EditorPage() {
         <div className="flex items-center gap-4">
           <Button
             onClick={() => handleSave(false)}
-            disabled={saving || !formData.title || !formData.content}
+            disabled={savePostMutation.isPending || !formData.title || !formData.content}
             className="px-6"
             aria-label="Save blog post"
           >
-            {saving ? 'Saving...' : 'Save Post'}
+            {savePostMutation.isPending ? 'Saving...' : 'Save Post'}
           </Button>
 
           <Button
             onClick={() => handleSave(true)}
-            disabled={saving || !formData.title || !formData.content}
+            disabled={savePostMutation.isPending || !formData.title || !formData.content}
             variant="outline"
             className="px-6"
             aria-label="Save as draft"
           >
-            {saving ? 'Saving...' : 'Save Draft'}
+            {savePostMutation.isPending ? 'Saving...' : 'Save Draft'}
           </Button>
 
           {message && (
