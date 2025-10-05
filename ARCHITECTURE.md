@@ -48,12 +48,17 @@ src/
 │   │
 │   └── editor/
 │       ├── core/                # Editor business logic
-│       │   ├── entities/        # Editor domain models
-│       │   └── use-cases/       # Editor operations
-│       ├── data/                # Editor data access
+│       │   ├── entities/        # Editor domain models (AutosaveDraft, EditorVersion)
+│       │   ├── ports/           # Port interfaces (IEditorRepository)
+│       │   ├── use-cases/       # Editor operations (save-autosave, restore-autosave, etc.)
+│       │   └── form/            # Form controller (framework-agnostic logic)
+│       │       └── editor-form.controller.ts  # Pure form validation & update logic
+│       ├── data/                # Editor data access (SECONDARY ADAPTERS)
 │       │   └── repositories/
-│       └── hooks/               # Editor-specific hooks
-│           └── use-editor-state.ts
+│       │       ├── editor.repository.ts                  # Provider (exports editorRepository)
+│       │       └── editor.localstorage.repository.ts    # LocalStorage implementation
+│       └── hooks/               # Editor-specific React hooks (PRIMARY ADAPTERS)
+│           └── use-editor-state.ts  # React adapter wrapping form controller
 │
 ├── shared/                       # Cross-domain utilities
 │   ├── hooks/                   # Generic React Query wrappers
@@ -524,7 +529,7 @@ app/[feature-name]/
 Note: No feature-specific hooks needed - use generic wrappers from shared/hooks
 ```
 
-### Example: Adding a new "Comments" feature
+### Example 1: Adding a new "Comments" feature
 
 1. **Core** (`src/features/comments/core/`):
    ```typescript
@@ -601,6 +606,69 @@ Note: No feature-specific hooks needed - use generic wrappers from shared/hooks
      return <CommentList comments={comments} />
    }
    ```
+
+### Example 2: Editor Feature (Framework-Agnostic Logic Pattern)
+
+The editor demonstrates separating framework-agnostic logic from React:
+
+1. **Framework-Agnostic Form Controller** (`src/features/editor/core/form/`):
+   ```typescript
+   // editor-form.controller.ts
+   export class EditorFormController {
+     updateField(state: EditorFormData, field: string, value: any): EditorFormData {
+       return { ...state, [field]: value }
+     }
+
+     validate(state: EditorFormData): { isValid: boolean; errors: {} } {
+       // Pure validation logic
+     }
+
+     canSave(state: EditorFormData): boolean {
+       return this.validate(state).isValid
+     }
+   }
+
+   export const editorFormController = new EditorFormController()
+   ```
+
+2. **React Adapter Hook** (`src/features/editor/hooks/`):
+   ```typescript
+   // use-editor-state.ts
+   import { editorFormController } from '@/features/editor/core/form/editor-form.controller'
+
+   export function useEditorState() {
+     const [formData, setFormData] = useState(editorFormController.reset())
+
+     const updateField = useCallback((field, value) => {
+       setFormData(prev => editorFormController.updateField(prev, field, value))
+     }, [])
+
+     const canSave = editorFormController.canSave(formData)
+
+     return { formData, updateField, canSave }
+   }
+   ```
+
+3. **UI Component** (`app/editor/page.tsx`):
+   ```typescript
+   export default function EditorPage() {
+     const { formData, updateField, canSave } = useEditorState()
+
+     return (
+       <input
+         value={formData.title}
+         onChange={(e) => updateField('title', e.target.value)}
+       />
+       <button disabled={!canSave}>Save</button>
+     )
+   }
+   ```
+
+**Benefits of this pattern:**
+- ✅ Form logic testable without React
+- ✅ Can migrate to Vue/Svelte by rewriting only the adapter hook
+- ✅ Business rules in controller, React-specific code in hook
+- ✅ Clear separation between "what changes" (UI) and "what's stable" (logic)
 
 ## Migration Notes
 

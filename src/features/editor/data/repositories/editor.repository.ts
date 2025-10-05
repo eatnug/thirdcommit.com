@@ -1,38 +1,16 @@
-import type { AutosaveDraft, EditorVersion } from '@/features/editor/core/entities/editor.entity'
+import type { IEditorRepository } from '@/features/editor/core/ports/editor-repository.port'
+import { LocalStorageEditorRepository } from './editor.localstorage.repository'
 
-export interface IEditorRepository {
-  getAutosave(): Promise<AutosaveDraft | null>
-  saveAutosave(draft: AutosaveDraft): Promise<void>
-  clearAutosave(): Promise<void>
-  getVersions(): Promise<EditorVersion[]>
-  addVersion(version: EditorVersion): Promise<void>
-}
+/**
+ * Repository Provider
+ *
+ * This file acts as a provider/factory for the editor repository.
+ * Switch implementations here without changing use-cases.
+ *
+ * Available implementations:
+ * - LocalStorageEditorRepository (browser localStorage)
+ * - IndexedDBEditorRepository (future: IndexedDB for larger data)
+ * - ApiEditorRepository (future: REST API sync)
+ */
 
-export class EditorRepository implements IEditorRepository {
-  async getAutosave(): Promise<AutosaveDraft | null> {
-    const { editorStorage } = await import('@/features/editor/data/repositories/editor-storage')
-    return editorStorage.getAutosave()
-  }
-
-  async saveAutosave(draft: AutosaveDraft): Promise<void> {
-    const { editorStorage } = await import('@/features/editor/data/repositories/editor-storage')
-    editorStorage.setAutosave(draft)
-  }
-
-  async clearAutosave(): Promise<void> {
-    const { editorStorage } = await import('@/features/editor/data/repositories/editor-storage')
-    editorStorage.clearAutosave()
-  }
-
-  async getVersions(): Promise<EditorVersion[]> {
-    const { editorStorage } = await import('@/features/editor/data/repositories/editor-storage')
-    return editorStorage.getVersions()
-  }
-
-  async addVersion(version: EditorVersion): Promise<void> {
-    const { editorStorage } = await import('@/features/editor/data/repositories/editor-storage')
-    editorStorage.addVersion(version)
-  }
-}
-
-export const editorRepository = new EditorRepository()
+export const editorRepository: IEditorRepository = new LocalStorageEditorRepository()
