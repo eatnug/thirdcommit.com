@@ -1,10 +1,11 @@
 import { notFound } from 'next/navigation'
-import { getAllTags, getPostsByTag } from '@/lib/posts'
-import { PostCard } from '@/components/blog/post-card'
-import { Badge } from '@/components/ui/badge'
+import { getAllTagsUseCase } from '@/core/use-cases/get-all-tags.use-case'
+import { getPostsByTagUseCase } from '@/core/use-cases/get-posts-by-tag.use-case'
+import { PostCard } from '@/presentation/components/blog/post-card'
+import { Badge } from '@/presentation/components/ui/badge'
 
 export async function generateStaticParams() {
-  const tags = await getAllTags()
+  const tags = await getAllTagsUseCase()
   return tags.map(tag => ({
     tag,
   }))
@@ -16,7 +17,7 @@ export default async function TagPage({
   params: Promise<{ tag: string }>
 }) {
   const { tag } = await params
-  const posts = await getPostsByTag(tag)
+  const posts = await getPostsByTagUseCase(tag)
 
   if (posts.length === 0) {
     notFound()
