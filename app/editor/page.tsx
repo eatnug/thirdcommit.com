@@ -1,20 +1,21 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/presentation/components/ui/button'
-import { Card } from '@/presentation/components/ui/card'
-import { markdownService } from '@/shared/services/markdown.service'
-import { useAutosave, useBeforeUnload, useLocalStorage } from '@/presentation/hooks'
-import type { AutosaveDraft, EditorVersion } from '@/core/entities/editor.entity'
-import { editorStorage } from '@/data/sources/local/editor-storage'
-import { generateId, debounce } from '@/shared/utils'
+import { Button } from '@/app/_lib/components/ui/button'
+import { Card } from '@/app/_lib/components/ui/card'
+import { useEditorState } from '@/features/editor/hooks/use-editor-state'
+import { savePostUseCase } from '@/features/blog/core/use-cases/save-post.use-case'
+import { renderMarkdownUseCase } from '@/features/editor/core/use-cases/render-markdown.use-case'
+import { debounce } from '@/shared/utils'
 
 export default function EditorPage() {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [tags, setTags] = useState('')
-  const [content, setContent] = useState('')
-  const [draft, setDraft] = useState(true)
+  const {
+    formData,
+    updateFormData,
+    lastAutosave,
+    clearAutosave,
+  } = useEditorState()
+
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
@@ -24,88 +25,18 @@ export default function EditorPage() {
   const [previewLoading, setPreviewLoading] = useState(false)
   const [previewError, setPreviewError] = useState<string | null>(null)
 
-  // Autosave state
-  const [lastAutosave, setLastAutosave] = useState<number | null>(null)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-
-  // Version history state
-  const [versions, setVersions] = useLocalStorage<EditorVersion[]>('editor-versions', [])
-  const [showVersions, setShowVersions] = useState(false)
-
-  // Restore autosaved draft on mount
-  useEffect(() => {
-    const autosave = editorStorage.getAutosave()
-
-    if (autosave) {
-      setTitle(autosave.title)
-      setDescription(autosave.description)
-      setTags(autosave.tags)
-      setContent(autosave.content)
-      setDraft(autosave.draft)
-      setLastAutosave(autosave.timestamp)
-      setHasUnsavedChanges(true)
-    }
-  }, []) // Empty dependency array - only run on mount
-
-  // Track unsaved changes
-  useEffect(() => {
-    // If any field has content, mark as having unsaved changes
-    const hasContent = !!(title || description || tags || content)
-    setHasUnsavedChanges(hasContent)
-  }, [title, description, tags, content])
-
-  // Autosave callback
-  const handleAutosave = (draft: AutosaveDraft) => {
-    editorStorage.setAutosave(draft)
-    setLastAutosave(Date.now())
-  }
-
-  // Set up autosave with custom hook
-  useAutosave({
-    data: {
-      title,
-      description,
-      tags,
-      content,
-      draft,
-      timestamp: Date.now(),
-    },
-    onSave: handleAutosave,
-    interval: 30000, // 30 seconds
-  })
-
-  // Warn before leaving with unsaved changes
-  useBeforeUnload(hasUnsavedChanges)
-
-  // Function to save current state as a version
-  const saveVersion = () => {
-    const newVersion: EditorVersion = {
-      id: generateId(),
-      title,
-      description,
-      tags,
-      content,
-      draft,
-      timestamp: Date.now(),
-    }
-
-    setVersions((prev) => {
-      const updated = [newVersion, ...prev]
-      // Keep only last 10 versions
-      return updated.slice(0, 10)
-    })
-  }
-
-  // Function to restore a version
-  const restoreVersion = (version: EditorVersion) => {
-    setTitle(version.title)
-    setDescription(version.description)
-    setTags(version.tags)
-    setContent(version.content)
-    setDraft(version.draft)
-    setShowVersions(false)
-    setMessage(`✅ Restored version from ${new Date(version.timestamp).toLocaleString()}`)
-  }
+  // Drafts state
+  const [drafts, setDrafts] = useState<Array<{
+    slug: string
+    title: string
+    date: string
+    tags: string[]
+    description?: string
+    contentPreview: string
+  }>>([])
+  const [loadingDrafts, setLoadingDrafts] = useState(false)
+  const [currentDraftSlug, setCurrentDraftSlug] = useState<string | null>(null)
+  const [showDrafts, setShowDrafts] = useState(false)
 
   // Create debounced preview update
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -120,7 +51,7 @@ export default function EditorPage() {
       setPreviewLoading(true)
       setPreviewError(null)
 
-      markdownService.toHtml(content)
+      renderMarkdownUseCase(content)
         .then((html) => {
           setPreviewHtml(html)
           setPreviewLoading(false)
@@ -137,16 +68,43 @@ export default function EditorPage() {
   // Update content change to use debounced update
   useEffect(() => {
     if (showPreview) {
-      debouncedPreviewUpdate(content)
+      debouncedPreviewUpdate(formData.content)
     }
-  }, [content, showPreview, debouncedPreviewUpdate])
+  }, [formData.content, showPreview, debouncedPreviewUpdate])
+
+  // Fetch drafts on mount
+  useEffect(() => {
+    fetchDrafts()
+  }, [])
+
+  const fetchDrafts = async () => {
+    setLoadingDrafts(true)
+    try {
+      console.log('Fetching drafts...')
+      const response = await fetch('/api/drafts')
+      console.log('Response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Drafts data:', data)
+        setDrafts(data.drafts || [])
+      } else {
+        console.error('Failed to fetch drafts:', response.status, response.statusText)
+        const errorData = await response.json()
+        console.error('Error details:', errorData)
+      }
+    } catch (error) {
+      console.error('Failed to fetch drafts:', error)
+    } finally {
+      setLoadingDrafts(false)
+    }
+  }
 
   // Add keyboard shortcut for save (Cmd/Ctrl + S)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 's') {
         e.preventDefault()
-        if (!saving && title && content) {
+        if (!saving && formData.title && formData.content) {
           handleSave()
         }
       }
@@ -155,39 +113,22 @@ export default function EditorPage() {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saving, title, content])
+  }, [saving, formData.title, formData.content])
 
-  const handleSave = async () => {
-    // Save current state to version history before saving
-    saveVersion()
-
+  const handleSave = async (asDraft: boolean = false) => {
     setSaving(true)
     setMessage('')
 
     try {
-      const response = await fetch('/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title,
-          description,
-          tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-          content,
-          draft,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        setMessage(`✅ Saved: ${data.filename}`)
-        // Clear autosave after successful save
-        editorStorage.clearAutosave()
-        setHasUnsavedChanges(false)
-        setLastAutosave(null)
-      } else {
-        setMessage(`❌ Error: ${data.error}`)
-      }
+      const dataToSave = { ...formData, draft: asDraft }
+      const result = await savePostUseCase(dataToSave)
+      setMessage(`✅ Saved: ${result.filename}`)
+      // Clear autosave after successful save
+      await clearAutosave()
+      // Refresh drafts list
+      fetchDrafts()
+      // Update form data with the draft status
+      updateFormData({ draft: asDraft })
     } catch (error) {
       setMessage(`❌ Failed to save: ${error}`)
     } finally {
@@ -195,8 +136,75 @@ export default function EditorPage() {
     }
   }
 
-  // Show warning in production
-  if (process.env.NODE_ENV === 'production') {
+  const loadDraft = async (slug: string) => {
+    try {
+      const response = await fetch(`/api/posts/${slug}`)
+      if (response.ok) {
+        const data = await response.json()
+        updateFormData({
+          title: data.title,
+          description: data.description || '',
+          tags: data.tags.join(', '),
+          content: data.content,
+          draft: data.draft,
+        })
+        setCurrentDraftSlug(slug)
+        setMessage(`✅ Loaded draft: ${data.title}`)
+      }
+    } catch (error) {
+      setMessage(`❌ Failed to load draft: ${error}`)
+    }
+  }
+
+  const deleteDraft = async (slug: string) => {
+    if (!confirm(`Are you sure you want to delete "${slug}"?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/posts/${slug}`, {
+        method: 'DELETE',
+      })
+      if (response.ok) {
+        setMessage(`✅ Deleted draft: ${slug}`)
+        fetchDrafts()
+        if (currentDraftSlug === slug) {
+          // Clear editor if we deleted the current draft
+          updateFormData({
+            title: '',
+            description: '',
+            tags: '',
+            content: '',
+            draft: true,
+          })
+          setCurrentDraftSlug(null)
+        }
+      }
+    } catch (error) {
+      setMessage(`❌ Failed to delete draft: ${error}`)
+    }
+  }
+
+  const startNewDraft = () => {
+    updateFormData({
+      title: '',
+      description: '',
+      tags: '',
+      content: '',
+      draft: true,
+    })
+    setCurrentDraftSlug(null)
+    setMessage('')
+  }
+
+  // Show warning in production (using useState to avoid hydration mismatch)
+  const [isProduction, setIsProduction] = useState(false)
+
+  useEffect(() => {
+    setIsProduction(process.env.NODE_ENV === 'production')
+  }, [])
+
+  if (isProduction) {
     return (
       <div className="container mx-auto max-w-2xl p-8">
         <Card className="p-6">
@@ -215,75 +223,93 @@ export default function EditorPage() {
         <h1 className="text-3xl font-bold">Local Post Editor</h1>
 
         <div className="flex items-center gap-4">
-          {/* Version History Dropdown */}
-          {versions.length > 0 && (
-            <div className="relative">
-              <Button
-                onClick={() => setShowVersions(!showVersions)}
-                variant="outline"
-                size="sm"
-              >
-                History ({versions.length})
-              </Button>
-
-              {showVersions && (
-                <div className="absolute right-0 top-10 z-10 w-80 rounded-md border border-gray-300 bg-white shadow-lg">
-                  <div className="p-2">
-                    <div className="mb-2 flex items-center justify-between border-b pb-2">
-                      <h3 className="font-medium">Version History</h3>
-                      <button
-                        onClick={() => setShowVersions(false)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        ✕
-                      </button>
-                    </div>
-
-                    <div className="max-h-96 overflow-y-auto">
-                      {versions.map((version) => (
-                        <div
-                          key={version.id}
-                          className="mb-2 rounded border border-gray-200 p-2 hover:bg-gray-50"
-                        >
-                          <div className="mb-1 flex items-start justify-between">
-                            <div className="flex-1">
-                              <p className="font-medium text-sm truncate">
-                                {version.title || '(Untitled)'}
-                              </p>
-                              <p className="text-xs text-gray-500">
-                                {new Date(version.timestamp).toLocaleString()}
-                              </p>
-                              {version.draft && (
-                                <span className="text-xs text-orange-600">Draft</span>
-                              )}
-                            </div>
-                            <Button
-                              onClick={() => restoreVersion(version)}
-                              variant="outline"
-                              size="sm"
-                              className="ml-2"
-                            >
-                              Restore
-                            </Button>
-                          </div>
-                          <p className="text-xs text-gray-600 line-clamp-2">
-                            {version.content.substring(0, 100)}...
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
           {/* Autosave indicator */}
           {lastAutosave && (
             <span className="text-xs text-gray-500">
               Autosaved {new Date(lastAutosave).toLocaleTimeString()}
             </span>
           )}
+
+          {/* Drafts Dropdown */}
+          <div className="relative">
+            <Button
+              onClick={() => setShowDrafts(!showDrafts)}
+              variant="outline"
+              size="sm"
+            >
+              Drafts ({drafts.length})
+            </Button>
+
+            {showDrafts && (
+              <div className="absolute right-0 top-10 z-10 w-96 rounded-md border border-gray-300 bg-white shadow-lg">
+                <div className="p-2">
+                  <div className="mb-2 flex items-center justify-between border-b pb-2">
+                    <h3 className="font-medium">Drafts</h3>
+                    <div className="flex gap-2">
+                      <Button onClick={startNewDraft} variant="outline" size="sm">
+                        New
+                      </Button>
+                      <button
+                        onClick={() => setShowDrafts(false)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto">
+                    {loadingDrafts ? (
+                      <p className="text-sm text-gray-500 p-2">Loading drafts...</p>
+                    ) : drafts.length === 0 ? (
+                      <p className="text-sm text-gray-500 p-2">No drafts found</p>
+                    ) : (
+                      drafts.map((draft) => (
+                        <div
+                          key={draft.slug}
+                          className={`mb-2 rounded border p-2 hover:bg-gray-50 cursor-pointer ${
+                            currentDraftSlug === draft.slug ? 'bg-blue-50 border-blue-300' : 'border-gray-200'
+                          }`}
+                          onClick={() => {
+                            loadDraft(draft.slug)
+                            setShowDrafts(false)
+                          }}
+                        >
+                          <div className="flex items-start justify-between mb-1">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-sm truncate">{draft.title}</h4>
+                              <p className="text-xs text-gray-500">{draft.date}</p>
+                              {draft.tags.length > 0 && (
+                                <div className="flex gap-1 mt-1 flex-wrap">
+                                  {draft.tags.slice(0, 3).map((tag, i) => (
+                                    <span key={i} className="text-xs bg-gray-100 px-2 py-0.5 rounded">
+                                      {tag}
+                                    </span>
+                                  ))}
+                                  {draft.tags.length > 3 && (
+                                    <span className="text-xs text-gray-500">+{draft.tags.length - 3}</span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                deleteDraft(draft.slug)
+                              }}
+                              className="text-red-500 hover:text-red-700 text-sm ml-2"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Preview Toggle */}
           <div className="flex items-center gap-2">
@@ -310,8 +336,8 @@ export default function EditorPage() {
             <label className="mb-1 block text-sm font-medium">Title *</label>
             <input
               type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              value={formData.title}
+              onChange={(e) => updateFormData({ title: e.target.value })}
               className="w-full rounded-md border border-gray-300 px-3 py-2"
               placeholder="My Awesome Blog Post"
             />
@@ -324,45 +350,29 @@ export default function EditorPage() {
             </label>
             <input
               type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              value={formData.description}
+              onChange={(e) => updateFormData({ description: e.target.value })}
               className="w-full rounded-md border border-gray-300 px-3 py-2"
               placeholder="A brief description for SEO (150-160 chars)"
               maxLength={160}
             />
             <p className="mt-1 text-xs text-gray-500">
-              {description.length}/160 characters
+              {formData.description.length}/160 characters
             </p>
           </div>
 
-          {/* Tags and Draft in same row */}
-          <div className="grid grid-cols-[1fr,auto] gap-3 items-end">
-            <div>
-              <label className="mb-1 block text-sm font-medium">
-                Tags (comma-separated)
-              </label>
-              <input
-                type="text"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2"
-                placeholder="nextjs, react, typescript"
-              />
-            </div>
-
-            {/* Draft Toggle */}
-            <div className="flex items-center gap-2 pb-2">
-              <input
-                type="checkbox"
-                id="draft"
-                checked={draft}
-                onChange={(e) => setDraft(e.target.checked)}
-                className="h-4 w-4"
-              />
-              <label htmlFor="draft" className="text-sm font-medium whitespace-nowrap">
-                Save as draft
-              </label>
-            </div>
+          {/* Tags */}
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Tags (comma-separated)
+            </label>
+            <input
+              type="text"
+              value={formData.tags}
+              onChange={(e) => updateFormData({ tags: e.target.value })}
+              className="w-full rounded-md border border-gray-300 px-3 py-2"
+              placeholder="nextjs, react, typescript"
+            />
           </div>
         </div>
       </div>
@@ -376,8 +386,8 @@ export default function EditorPage() {
           </label>
           <div className="relative">
             <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              value={formData.content}
+              onChange={(e) => updateFormData({ content: e.target.value })}
               className="h-[calc(100vh-28rem)] w-full rounded-lg border-2 border-gray-300 p-4 font-mono text-sm resize-none bg-white text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
               placeholder="# Start writing your markdown here...
 ## This is the raw markdown editor
@@ -389,7 +399,7 @@ export default function EditorPage() {
               }}
             />
             <div className="absolute top-2 right-2 text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {content.split('\n').length} lines
+              {formData.content.split('\n').length} lines
             </div>
           </div>
         </div>
@@ -413,15 +423,15 @@ export default function EditorPage() {
                 </div>
               ) : (
                 <>
-                  {title && (
-                    <h1 className="text-4xl font-bold mb-4 text-gray-900">{title}</h1>
+                  {formData.title && (
+                    <h1 className="text-4xl font-bold mb-4 text-gray-900">{formData.title}</h1>
                   )}
-                  {description && (
-                    <p className="text-gray-600 mb-6 text-lg">{description}</p>
+                  {formData.description && (
+                    <p className="text-gray-600 mb-6 text-lg">{formData.description}</p>
                   )}
-                  {tags && (
+                  {formData.tags && (
                     <div className="flex flex-wrap gap-2 mb-8">
-                      {tags.split(',').map((tag, i) => (
+                      {formData.tags.split(',').map((tag, i) => (
                         <span
                           key={i}
                           className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"
@@ -446,7 +456,7 @@ export default function EditorPage() {
                       prose-hr:border-gray-300"
                     dangerouslySetInnerHTML={{ __html: previewHtml }}
                   />
-                  {!content && (
+                  {!formData.content && (
                     <p className="text-gray-400 text-center py-16 italic">
                       Start typing to see preview...
                     </p>
@@ -463,12 +473,22 @@ export default function EditorPage() {
         {/* Actions */}
         <div className="flex items-center gap-4">
           <Button
-            onClick={handleSave}
-            disabled={saving || !title || !content}
+            onClick={() => handleSave(false)}
+            disabled={saving || !formData.title || !formData.content}
             className="px-6"
             aria-label="Save blog post"
           >
             {saving ? 'Saving...' : 'Save Post'}
+          </Button>
+
+          <Button
+            onClick={() => handleSave(true)}
+            disabled={saving || !formData.title || !formData.content}
+            variant="outline"
+            className="px-6"
+            aria-label="Save as draft"
+          >
+            {saving ? 'Saving...' : 'Save Draft'}
           </Button>
 
           {message && (

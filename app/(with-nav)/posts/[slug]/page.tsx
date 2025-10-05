@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getPostsUseCase } from '@/core/use-cases/get-posts.use-case'
-import { getPostBySlugUseCase } from '@/core/use-cases/get-post-by-slug.use-case'
-import { Badge } from '@/presentation/components/ui/badge'
-import { Separator } from '@/presentation/components/ui/separator'
+import { getPostsUseCase } from '@/features/blog/core/use-cases/get-posts.use-case'
+import { getPostBySlugUseCase } from '@/features/blog/core/use-cases/get-post-by-slug.use-case'
+import { Badge } from '@/app/_lib/components/ui/badge'
+import { Separator } from '@/app/_lib/components/ui/separator'
 import { Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 

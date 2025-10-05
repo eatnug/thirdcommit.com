@@ -1,5 +1,5 @@
-import { getPostsUseCase } from '@/core/use-cases/get-posts.use-case'
-import { PostCard } from '@/presentation/components/blog/post-card'
+import { getPostsUseCase } from '@/features/blog/core/use-cases/get-posts.use-case'
+import { PostCard } from '@/app/(with-nav)/blog/_components/post-card'
 
 export default async function BlogPage() {
   const posts = await getPostsUseCase()
