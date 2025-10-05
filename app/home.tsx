@@ -28,7 +28,7 @@ export default function HomePage() {
           <div className="grid-simple">
             <aside className="left">
               <div className="profile-circle dashed">
-                <img src="https://media.licdn.com/dms/image/v2/D5603AQGRqqD4v04Amw/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1731290152148?e=1758758400&v=beta&t=8KVFCwhsFjXnVd3QhKnoc-RcGc3OCaxwJdnXrNtEydU" alt="Jake Park" referrerPolicy="no-referrer" />
+                <img src="https://github.com/user-attachments/assets/f20fd372-8d72-4e98-a97a-29dbc4abcb49" alt="Jake Park" referrerPolicy="no-referrer" />
               </div>
               <div className="links dashed">
                 <ul className="icon-list">
