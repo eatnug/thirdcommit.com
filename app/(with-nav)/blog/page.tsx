@@ -1,8 +1,8 @@
-import { getAllPosts } from '@/lib/posts'
-import { PostCard } from '@/components/blog/post-card'
+import { getPostsUseCase } from '@/core/use-cases/get-posts.use-case'
+import { PostCard } from '@/presentation/components/blog/post-card'
 
 export default async function BlogPage() {
-  const posts = await getAllPosts()
+  const posts = await getPostsUseCase()
 
   return (
     <div>

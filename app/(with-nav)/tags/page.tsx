@@ -1,14 +1,15 @@
 import Link from 'next/link'
-import { getAllTags, getPostsByTag } from '@/lib/posts'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { getAllTagsUseCase } from '@/core/use-cases/get-all-tags.use-case'
+import { getPostsByTagUseCase } from '@/core/use-cases/get-posts-by-tag.use-case'
+import { Badge } from '@/presentation/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/presentation/components/ui/card'
 
 export default async function TagsPage() {
-  const tags = await getAllTags()
+  const tags = await getAllTagsUseCase()
   const tagCounts = await Promise.all(
     tags.map(async tag => ({
       tag,
-      count: (await getPostsByTag(tag)).length
+      count: (await getPostsByTagUseCase(tag)).length
     }))
   )
 

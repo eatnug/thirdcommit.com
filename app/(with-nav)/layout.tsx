@@ -5,6 +5,8 @@ export default function WithNavLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const isDevelopment = process.env.NODE_ENV === 'development'
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b">
@@ -22,6 +24,11 @@ export default function WithNavLayout({
             <Link href="/tags" className="hover:underline">
               Tags
             </Link>
+            {isDevelopment && (
+              <Link href="/editor" className="hover:underline text-blue-600">
+                Editor
+              </Link>
+            )}
           </div>
         </nav>
       </header>
