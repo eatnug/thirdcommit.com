@@ -14,40 +14,23 @@ export async function GET() {
   }
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require('path')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const matter = require('gray-matter')
+    // Import repository directly in API route
+    const { getServerPostRepository } = await import('@/infrastructure/blog/repositories/post.repository')
+    const repository = await getServerPostRepository()
+    const posts = await repository.getPosts()
 
-    const postsDir = path.join(process.cwd(), 'storage', 'posts')
-
-    if (!fs.existsSync(postsDir)) {
-      return NextResponse.json({ drafts: [] })
-    }
-
-    const files = fs.readdirSync(postsDir)
-    const drafts = files
-      .filter((file: string) => file.endsWith('.md'))
-      .map((file: string) => {
-        const filePath = path.join(postsDir, file)
-        const fileContents = fs.readFileSync(filePath, 'utf8')
-        const { data, content } = matter(fileContents)
-
-        if (data.draft) {
-          return {
-            slug: file.replace(/\.md$/, ''),
-            title: data.title,
-            date: data.date,
-            tags: data.tags || [],
-            description: data.description,
-            contentPreview: content.substring(0, 100),
-          }
-        }
-        return null
-      })
-      .filter(Boolean)
+    // Filter to only draft posts
+    const drafts = posts
+      .filter((post) => post.status === 'draft')
+      .sort((a, b) => b.updated_at.getTime() - a.updated_at.getTime())
+      .map((draft) => ({
+        id: draft.id,
+        slug: draft.slug,
+        title: draft.title,
+        status: draft.status,
+        updated_at: draft.updated_at.toISOString(),
+        description: draft.description,
+      }))
 
     return NextResponse.json({ drafts })
   } catch (error) {

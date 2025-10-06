@@ -8,9 +8,8 @@ const isDev = process.env.NODE_ENV === 'development'
 interface PostData {
   title: string
   description?: string
-  tags: string[]
   content: string
-  draft: boolean
+  status?: 'draft' | 'published'
 }
 
 export async function POST(request: NextRequest) {
@@ -31,49 +30,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const fs = require('fs')
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const path = require('path')
+    // Import repository directly in API route
+    const { getServerPostRepository } = await import('@/infrastructure/blog/repositories/post.repository')
+    const repository = await getServerPostRepository()
 
-    const postsDir = path.join(process.cwd(), 'storage', 'posts')
-
-    if (!fs.existsSync(postsDir)) {
-      fs.mkdirSync(postsDir, { recursive: true })
-    }
-
-    const filename = `${data.title}.md`
-    const filePath = path.join(postsDir, filename)
-
-    if (fs.existsSync(filePath)) {
-      return NextResponse.json(
-        { error: `Post with title "${data.title}" already exists` },
-        { status: 409 }
-      )
-    }
-
-    const frontmatter = [
-      '---',
-      `title: "${data.title}"`,
-      data.description ? `description: "${data.description}"` : '',
-      `tags: [${data.tags.map(tag => `"${tag}"`).join(', ')}]`,
-      `created_at: "${new Date().toISOString()}"`,
-      `draft: ${data.draft}`,
-      '---',
-      '',
-      data.content,
-    ]
-      .filter(Boolean)
-      .join('\n')
-
-    fs.writeFileSync(filePath, frontmatter, 'utf8')
+    const result = await repository.createPost({
+      title: data.title,
+      description: data.description,
+      content: data.content,
+      status: data.status || 'draft',
+    })
 
     return NextResponse.json(
       {
         success: true,
-        filename,
-        path: filePath,
-        title: data.title,
+        id: result.id,
+        slug: result.slug,
+        title: result.title,
+        status: result.status,
+        filename: result.filename,
+        path: result.path,
       },
       { status: 201 }
     )

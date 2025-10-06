@@ -1,15 +1,13 @@
 interface MetadataFormProps {
   title: string
   description: string
-  tags: string
   descriptionCharCount: { current: number; max: number }
-  onFieldChange: <K extends 'title' | 'description' | 'tags'>(field: K, value: string) => void
+  onFieldChange: <K extends 'title' | 'description'>(field: K, value: string) => void
 }
 
 export function MetadataForm({
   title,
   description,
-  tags,
   descriptionCharCount,
   onFieldChange,
 }: MetadataFormProps) {
@@ -44,20 +42,6 @@ export function MetadataForm({
           <p className="mt-1 text-xs text-gray-500">
             {descriptionCharCount.current}/{descriptionCharCount.max} characters
           </p>
-        </div>
-
-        {/* Tags */}
-        <div>
-          <label className="mb-1 block text-sm font-medium">
-            Tags (comma-separated)
-          </label>
-          <input
-            type="text"
-            value={tags}
-            onChange={(e) => onFieldChange('tags', e.target.value)}
-            className="w-full rounded-md border border-gray-300 px-3 py-2"
-            placeholder="nextjs, react, typescript"
-          />
         </div>
       </div>
     </div>

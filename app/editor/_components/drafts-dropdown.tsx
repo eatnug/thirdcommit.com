@@ -4,18 +4,18 @@ import type { Post } from '@/domain/blog/entities/post.entity'
 interface DraftsDropdownProps {
   drafts: Post[]
   loading: boolean
-  currentDraftTitle: string | null
+  currentPostId: string | null
   isOpen: boolean
   onClose: () => void
-  onLoadDraft: (title: string) => void
-  onDeleteDraft: (title: string) => void
+  onLoadDraft: (id: string) => void
+  onDeleteDraft: (id: string) => void
   onNewDraft: () => void
 }
 
 export function DraftsDropdown({
   drafts,
   loading,
-  currentDraftTitle,
+  currentPostId,
   isOpen,
   onClose,
   onLoadDraft,
@@ -50,42 +50,27 @@ export function DraftsDropdown({
           ) : (
             drafts.map((draft) => (
               <div
-                key={draft.title}
+                key={draft.id}
                 className={`mb-2 rounded border p-2 hover:bg-gray-50 cursor-pointer ${
-                  currentDraftTitle === draft.title
+                  currentPostId === draft.id
                     ? 'bg-blue-50 border-blue-300'
                     : 'border-gray-200'
                 }`}
-                onClick={() => onLoadDraft(draft.title)}
+                onClick={() => onLoadDraft(draft.id)}
               >
                 <div className="flex items-start justify-between mb-1">
                   <div className="flex-1">
                     <h4 className="font-medium text-sm truncate">
                       {draft.title}
                     </h4>
-                    <p className="text-xs text-gray-500">{draft.created_at.toString()}</p>
-                    {draft.tags.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {draft.tags.slice(0, 3).map((tag, i) => (
-                          <span
-                            key={i}
-                            className="text-xs bg-gray-100 px-2 py-0.5 rounded"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {draft.tags.length > 3 && (
-                          <span className="text-xs text-gray-500">
-                            +{draft.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    <p className="text-xs text-gray-500">
+                      Updated: {new Date(draft.updated_at).toLocaleDateString()}
+                    </p>
                   </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      onDeleteDraft(draft.title)
+                      onDeleteDraft(draft.id)
                     }}
                     className="text-red-500 hover:text-red-700 text-sm ml-2"
                   >

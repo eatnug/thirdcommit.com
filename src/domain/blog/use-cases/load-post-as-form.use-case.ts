@@ -1,41 +1,29 @@
 import type { PostFormData } from '@/domain/blog/entities/post.entity'
+import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
 
+/**
+ * Use case for loading a post as form data
+ *
+ * In volatility-based hexagonal architecture:
+ * - This is TIER 3 (STABLE) - business logic inside the hexagon
+ * - Depends on port interface (IPostRepository), not concrete implementation
+ * - Transforms Post entity to PostFormData DTO
+ */
 export async function loadPostAsFormUseCase(
-  title: string
+  id: string,
+  repository: IPostRepository
 ): Promise<PostFormData | null> {
-  if (typeof window === 'undefined') {
-    // Server-side: use filesystem
-    const { postRepository } = await import('@/infrastructure/blog/repositories/post.repository')
-    const post = await postRepository.getPostByTitle(title)
+  const post = await repository.getPostById(id)
 
-    if (!post) {
-      return null
-    }
-
-    return {
-      title: post.title,
-      description: post.description || '',
-      tags: post.tags.join(', '),
-      content: post.content,
-      draft: post.draft,
-    }
+  if (!post) {
+    return null
   }
 
-  // Client-side: use API
-  const response = await fetch(`/api/posts/${encodeURIComponent(title)}`)
-  if (!response.ok) {
-    if (response.status === 404) {
-      return null
-    }
-    throw new Error('Failed to load post')
-  }
-
-  const data = await response.json()
   return {
-    title: data.title,
-    description: data.description || '',
-    tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
-    content: data.content,
-    draft: data.draft,
+    id: post.id,
+    title: post.title,
+    description: post.description || '',
+    content: post.content,
+    status: post.status,
   }
 }

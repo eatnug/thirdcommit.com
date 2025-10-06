@@ -26,8 +26,6 @@ export { PostVisibilityPolicy } from './policies/post-visibility.policy'
 export { getPostsUseCase } from './use-cases/get-posts.use-case'
 export { getPostBySlugUseCase } from './use-cases/get-post-by-slug.use-case'
 export { getDraftsUseCase } from './use-cases/get-drafts.use-case'
-export { getAllTagsUseCase } from './use-cases/get-all-tags.use-case'
-export { getPostsByTagUseCase } from './use-cases/get-posts-by-tag.use-case'
 export { savePostUseCase } from './use-cases/save-post.use-case'
 export { deletePostUseCase } from './use-cases/delete-post.use-case'
 export { loadPostAsFormUseCase } from './use-cases/load-post-as-form.use-case'
@@ -45,58 +43,58 @@ export { PostNotFoundError } from './errors/post.error'
 export type { IPostRepository } from './ports/post-repository.port'
 
 // ============================================================================
-// INFRASTRUCTURE (TIER 2 - MODERATE)
-// Exported for testing and dependency injection
+// REPOSITORY EXPORTS (IOC Container)
 // ============================================================================
-export { postRepository } from '@/infrastructure/blog/repositories/post.repository'
+export { getServerPostRepository, getClientPostRepository } from '@/infrastructure/blog/repositories/post.repository'
 
 // ============================================================================
-// CONVENIENCE API (Pre-wired)
+// CONVENIENCE API (Server-side only)
 // ============================================================================
-import { postRepository } from '@/infrastructure/blog/repositories/post.repository'
+import type { IPostRepository } from './ports/post-repository.port'
 import { getPostsUseCase } from './use-cases/get-posts.use-case'
 import { getPostBySlugUseCase } from './use-cases/get-post-by-slug.use-case'
 import { getDraftsUseCase } from './use-cases/get-drafts.use-case'
-import { getAllTagsUseCase } from './use-cases/get-all-tags.use-case'
-import { getPostsByTagUseCase } from './use-cases/get-posts-by-tag.use-case'
+import { getPostByIdUseCase } from './use-cases/get-post-by-id.use-case'
+import { publishPostUseCase } from './use-cases/publish-post.use-case'
 import { deletePostUseCase } from './use-cases/delete-post.use-case'
 import { loadPostAsFormUseCase } from './use-cases/load-post-as-form.use-case'
 import { savePostUseCase } from './use-cases/save-post.use-case'
 import type { SavePostInput } from './use-cases/save-post.use-case'
 
 /**
- * Pre-wired blog API with default repository injected
+ * Blog API Factory
  *
- * Use this for convenience in application code.
- * For testing, import individual use-cases and inject mocks.
+ * Creates a blog API instance with injected repository.
+ * Consumers decide which repository implementation to use based on their environment.
  *
  * Example usage:
  * ```typescript
- * import { blog } from '@/features/blog'
+ * // Server Component
+ * import { createBlogApi } from '@/domain/blog'
+ * import { getServerPostRepository } from '@/infrastructure/blog/repositories/post.repository'
  *
- * const posts = await blog.getPosts()
- * const post = await blog.getPost('my-post')
+ * export default async function BlogPage() {
+ *   const repository = await getServerPostRepository()
+ *   const blog = createBlogApi(repository)
+ *   const posts = await blog.getPosts()
+ *   return <PostList posts={posts} />
+ * }
  * ```
  */
-export const blog = {
-  // Queries
-  getPosts: (environment?: string) => getPostsUseCase(postRepository, environment),
+export function createBlogApi(repository: IPostRepository) {
+  return {
+    // Queries
+    getPosts: () => getPostsUseCase(repository),
+    getPost: (slug: string) => getPostBySlugUseCase(slug, repository),
+    getPostById: (id: string) => getPostByIdUseCase(id, repository),
+    getDrafts: () => getDraftsUseCase(repository),
+    loadPostAsForm: (id: string) => loadPostAsFormUseCase(id, repository),
 
-  getPost: (slug: string, environment?: string) =>
-    getPostBySlugUseCase(slug, postRepository, environment),
-
-  getDrafts: () => getDraftsUseCase(),
-
-  getAllTags: () => getAllTagsUseCase(postRepository),
-
-  getPostsByTag: (tag: string, environment?: string) =>
-    getPostsByTagUseCase(tag, postRepository, environment),
-
-  loadPostAsForm: (title: string) => loadPostAsFormUseCase(title),
-
-  // Commands
-  savePost: (input: SavePostInput) => savePostUseCase(input),
-  deletePost: (title: string) => deletePostUseCase(title),
+    // Commands
+    savePost: (input: SavePostInput) => savePostUseCase(input, repository),
+    publishPost: (id: string) => publishPostUseCase(id, repository),
+    deletePost: (id: string) => deletePostUseCase(id, repository),
+  }
 }
 
 // ============================================================================

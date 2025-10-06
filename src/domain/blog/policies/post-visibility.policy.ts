@@ -16,17 +16,12 @@ export class PostVisibilityPolicy {
    * Determines if a post should be shown in public lists
    *
    * Business Rule:
-   * - In production: only published posts (draft = false)
-   * - In development: all posts (including drafts)
+   * - Only published posts (status = 'published') are shown
    *
    * @param post - The post to evaluate
-   * @param environment - Current environment ('production' | 'development' | 'test')
    */
-  static shouldShowInPublicList(post: Post, environment: string): boolean {
-    if (environment === 'production') {
-      return !post.draft
-    }
-    return true // Show all posts in non-production environments
+  static shouldShowInPublicList(post: Post): boolean {
+    return post.status === 'published'
   }
 
   /**
@@ -44,7 +39,7 @@ export class PostVisibilityPolicy {
     user?: { id: string; role: string; email: string }
   ): boolean {
     // Published posts are accessible to everyone
-    if (!post.draft) {
+    if (post.status === 'published') {
       return true
     }
 
@@ -69,30 +64,27 @@ export class PostVisibilityPolicy {
    * Determines if a post should be indexed by search engines
    *
    * Business Rule:
-   * - Only published posts in production should be indexed
+   * - Only published posts should be indexed
    *
    * @param post - The post to evaluate
-   * @param environment - Current environment
    */
-  static shouldIndexForSEO(post: Post, environment: string): boolean {
-    return environment === 'production' && !post.draft
+  static shouldIndexForSEO(post: Post): boolean {
+    return post.status === 'published'
   }
 
   /**
    * Filter a list of posts based on visibility rules
    *
    * @param posts - Array of posts to filter
-   * @param environment - Current environment
    * @param user - Optional user context
    */
   static filterVisiblePosts(
     posts: Post[],
-    environment: string,
     user?: { id: string; role: string; email: string }
   ): Post[] {
     return posts.filter((post) => {
       // For public lists, use public visibility rules
-      const isPubliclyVisible = this.shouldShowInPublicList(post, environment)
+      const isPubliclyVisible = this.shouldShowInPublicList(post)
 
       // For authenticated users, use access rules
       const isAccessible = user ? this.canUserAccess(post, user) : isPubliclyVisible

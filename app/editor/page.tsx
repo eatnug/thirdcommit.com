@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card } from '@/app/_components/card'
 import { useEditorViewModel } from './use-editor-view-model'
 import { EditorHeader } from './_components/editor-header'
@@ -10,8 +11,10 @@ import { PreviewPanel } from './_components/preview-panel'
 import { DraftsDropdown } from './_components/drafts-dropdown'
 import { EditorActions } from './_components/editor-actions'
 
-export default function EditorPage() {
-  const vm = useEditorViewModel()
+function EditorContent() {
+  const searchParams = useSearchParams()
+  const id = searchParams.get('id') || undefined
+  const vm = useEditorViewModel(id)
 
   // Show warning in production
   const [isProduction, setIsProduction] = useState(false)
@@ -38,7 +41,6 @@ export default function EditorPage() {
   return (
     <div className="container mx-auto max-w-6xl p-8">
       <EditorHeader
-        lastAutosave={vm.lastAutosave}
         draftsCount={vm.drafts.length}
         showDrafts={vm.showDrafts}
         showPreview={vm.showPreview}
@@ -51,7 +53,7 @@ export default function EditorPage() {
         <DraftsDropdown
           drafts={vm.drafts}
           loading={vm.loadingDrafts}
-          currentDraftTitle={vm.currentDraftTitle}
+          currentPostId={vm.currentPostId}
           isOpen={vm.showDrafts}
           onClose={vm.closeDrafts}
           onLoadDraft={vm.handleLoadDraft}
@@ -63,7 +65,6 @@ export default function EditorPage() {
       <MetadataForm
         title={vm.formData.title}
         description={vm.formData.description}
-        tags={vm.formData.tags}
         descriptionCharCount={vm.descriptionCharCount}
         onFieldChange={vm.updateField}
       />
@@ -82,7 +83,6 @@ export default function EditorPage() {
           <PreviewPanel
             title={vm.formData.title}
             description={vm.formData.description}
-            tags={vm.formData.tags}
             content={vm.formData.content}
             previewHtml={vm.previewHtml}
             previewLoading={vm.previewLoading}
@@ -93,10 +93,21 @@ export default function EditorPage() {
 
       <EditorActions
         isSaving={vm.isSaving}
+        isPublishing={vm.isPublishing}
         canSave={vm.canSave}
         message={vm.message}
+        postStatus={vm.formData.status}
         onSave={vm.handleSave}
+        onPublish={vm.handlePublish}
       />
     </div>
+  )
+}
+
+export default function EditorPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <EditorContent />
+    </Suspense>
   )
 }

@@ -12,13 +12,12 @@ import { PostVisibilityPolicy } from '@/domain/blog/policies/post-visibility.pol
  * - Framework-agnostic and testable
  */
 export async function getPostsUseCase(
-  repository: IPostRepository,
-  environment: string = process.env.NODE_ENV || 'development'
+  repository: IPostRepository
 ): Promise<Post[]> {
   const posts = await repository.getPosts()
 
   // Apply business policy for visibility
   return posts.filter((post) =>
-    PostVisibilityPolicy.shouldShowInPublicList(post, environment)
+    PostVisibilityPolicy.shouldShowInPublicList(post)
   )
 }

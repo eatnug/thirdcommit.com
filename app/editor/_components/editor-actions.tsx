@@ -3,39 +3,47 @@ import { Card } from '@/app/_components/card'
 
 interface EditorActionsProps {
   isSaving: boolean
+  isPublishing?: boolean
   canSave: boolean
   message: string
-  onSave: (asDraft: boolean) => void
+  postStatus?: 'draft' | 'published'
+  onSave: () => void
+  onPublish?: () => void
 }
 
 export function EditorActions({
   isSaving,
+  isPublishing = false,
   canSave,
   message,
+  postStatus = 'draft',
   onSave,
+  onPublish,
 }: EditorActionsProps) {
   return (
     <div className="mt-4 space-y-4">
       {/* Actions */}
       <div className="flex items-center gap-4">
         <Button
-          onClick={() => onSave(false)}
+          onClick={onSave}
           disabled={isSaving || !canSave}
           className="px-6"
           aria-label="Save blog post"
         >
-          {isSaving ? 'Saving...' : 'Save Post'}
+          {isSaving ? 'Saving...' : 'Save'}
         </Button>
 
-        <Button
-          onClick={() => onSave(true)}
-          disabled={isSaving || !canSave}
-          variant="outline"
-          className="px-6"
-          aria-label="Save as draft"
-        >
-          {isSaving ? 'Saving...' : 'Save Draft'}
-        </Button>
+        {onPublish && (
+          <Button
+            onClick={onPublish}
+            disabled={isPublishing || postStatus === 'published'}
+            variant="outline"
+            className="px-6"
+            aria-label="Publish post"
+          >
+            {isPublishing ? 'Publishing...' : postStatus === 'published' ? 'Already Published' : 'Publish'}
+          </Button>
+        )}
 
         {message && (
           <p

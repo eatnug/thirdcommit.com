@@ -16,12 +16,17 @@ export interface IPostRepository {
   getPosts(): Promise<Post[]>
 
   /**
+   * Retrieve a single post by its ID (ULID)
+   */
+  getPostById(id: string): Promise<Post | null>
+
+  /**
    * Retrieve a single post by its title
    */
   getPostByTitle(title: string): Promise<Post | null>
 
   /**
-   * Retrieve a single post by its slug (deprecated, use getPostByTitle)
+   * Retrieve a single post by its slug
    */
   getPostBySlug(slug: string): Promise<Post | null>
 
@@ -31,10 +36,30 @@ export interface IPostRepository {
   createPost(data: {
     title: string
     description?: string
-    tags: string[]
     content: string
-    draft: boolean
-  }): Promise<{ title: string; filename: string; path: string }>
+    status: 'draft' | 'published'
+  }): Promise<{
+    id: string
+    slug: string
+    title: string
+    status: 'draft' | 'published'
+    filename: string
+    path: string
+  }>
+
+  /**
+   * Update an existing post
+   */
+  updatePost(
+    id: string,
+    data: Partial<{
+      title: string
+      description: string
+      content: string
+      status: 'draft' | 'published'
+      published_at: Date | null
+    }>
+  ): Promise<Post>
 
   /**
    * Delete a post by its title

@@ -1,43 +1,46 @@
 import { useState, useEffect, useCallback } from "react";
-import { blog, type Post } from "@/domain/blog";
+import { createBlogApi, getClientPostRepository, type Post } from "@/domain/blog";
 import { useMutationWrapper, useBeforeUnload } from "@/app/_adapters/_hooks";
 import { markdownService } from "@/domain/blog/services/markdown.service";
+
+// Create blog API instance for client-side use
+let blogApiInstance: ReturnType<typeof createBlogApi> | null = null;
+
+async function getBlogApi() {
+  if (!blogApiInstance) {
+    const repository = await getClientPostRepository();
+    blogApiInstance = createBlogApi(repository);
+  }
+  return blogApiInstance;
+}
 
 export async function renderMarkdown(content: string): Promise<string> {
   return markdownService.toHtml(content);
 }
 
-const AUTOSAVE_KEY = "editor-autosave";
-const AUTOSAVE_INTERVAL = 30000; // 30 seconds
-
 export interface EditorFormData {
+  id?: string;
   title: string;
   description: string;
-  tags: string;
   content: string;
-  draft: boolean;
+  status: 'draft' | 'published';
 }
 
-export interface AutosaveDraft extends EditorFormData {
-  timestamp: number;
-}
-
-export function useEditorViewModel() {
+export function useEditorViewModel(initialId?: string) {
   // Form state
   const [formData, setFormData] = useState<EditorFormData>({
+    id: initialId,
     title: "",
     description: "",
-    tags: "",
     content: "",
-    draft: true,
+    status: 'draft',
   });
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [lastAutosave, setLastAutosave] = useState<number | null>(null);
+  const [currentPostId, setCurrentPostId] = useState<string | null>(initialId || null);
 
   // Drafts state
   const [drafts, setDrafts] = useState<Post[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(false);
-  const [currentDraftTitle, setCurrentDraftTitle] = useState<string | null>(null);
   const [showDrafts, setShowDrafts] = useState(false);
 
   // Preview state
@@ -49,42 +52,35 @@ export function useEditorViewModel() {
   // UI state
   const [message, setMessage] = useState("");
 
-  // Restore autosave on mount
+  // Load post if ID is provided
   useEffect(() => {
-    const saved = localStorage.getItem(AUTOSAVE_KEY);
-    if (saved) {
-      try {
-        const autosave: AutosaveDraft = JSON.parse(saved);
-        setFormData({
-          title: autosave.title,
-          description: autosave.description,
-          tags: autosave.tags,
-          content: autosave.content,
-          draft: autosave.draft,
-        });
-        setLastAutosave(autosave.timestamp);
-        setHasUnsavedChanges(true);
-      } catch (error) {
-        console.error("Failed to restore autosave:", error);
-      }
+    if (initialId) {
+      const loadPost = async () => {
+        try {
+          // Use API to fetch post
+          const response = await fetch(`/api/posts/${initialId}`);
+          if (!response.ok) {
+            throw new Error('Failed to load post');
+          }
+          const post = await response.json();
+          const postData = {
+            id: post.id,
+            title: post.title,
+            description: post.description || '',
+            content: post.content,
+            status: post.status,
+          };
+          setFormData(postData);
+          setCurrentPostId(initialId);
+          setHasUnsavedChanges(false);
+        } catch (error) {
+          console.error("Failed to load post:", error);
+          setMessage(`❌ Failed to load post: ${error}`);
+        }
+      };
+      loadPost();
     }
-  }, []);
-
-  // Autosave effect
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (formData.title || formData.content) {
-        const autosave: AutosaveDraft = {
-          ...formData,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(autosave));
-        setLastAutosave(autosave.timestamp);
-      }
-    }, AUTOSAVE_INTERVAL);
-
-    return () => clearInterval(timer);
-  }, [formData]);
+  }, [initialId]);
 
   // Track unsaved changes
   useEffect(() => {
@@ -99,8 +95,13 @@ export function useEditorViewModel() {
     const loadDrafts = async () => {
       setLoadingDrafts(true);
       try {
-        const fetchedDrafts = await blog.getDrafts();
-        setDrafts(fetchedDrafts);
+        // Use API on client side
+        const response = await fetch('/api/drafts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch drafts');
+        }
+        const data = await response.json();
+        setDrafts(data.drafts || []);
       } catch (error) {
         console.error("Failed to fetch drafts:", error);
       } finally {
@@ -134,30 +135,79 @@ export function useEditorViewModel() {
   }, [formData.content, showPreview]);
 
   // Save post mutation
-  const savePostMutation = useMutationWrapper(blog.savePost, {
+  const savePostMutation = useMutationWrapper(async (input: Parameters<Awaited<ReturnType<typeof getBlogApi>>['savePost']>[0]) => {
+    const blog = await getBlogApi();
+    return blog.savePost(input);
+  }, {
     onSuccess: async (result) => {
-      setMessage(`✅ Saved: ${result.filename}`);
+      const isCreate = !currentPostId;
+      if (isCreate && 'id' in result) {
+        // New post created - set the ID
+        setCurrentPostId(result.id);
+        setFormData(prev => ({ ...prev, id: result.id }));
+      }
+      setMessage(`✅ Saved: ${result.title || formData.title}`);
       setHasUnsavedChanges(false);
-      localStorage.removeItem(AUTOSAVE_KEY);
-      setLastAutosave(null);
-      // Refresh drafts
-      const fetchedDrafts = await blog.getDrafts();
-      setDrafts(fetchedDrafts);
+      // Refresh drafts via API
+      const response = await fetch('/api/drafts');
+      if (response.ok) {
+        const data = await response.json();
+        setDrafts(data.drafts || []);
+      }
     },
     onError: (error) => {
       setMessage(`❌ Failed to save: ${error}`);
     },
   });
 
-  // Handlers
-  const handleSave = useCallback(
-    (asDraft: boolean = false) => {
-      setMessage("");
-      const dataToSave = { ...formData, draft: asDraft };
-      savePostMutation.mutate(dataToSave);
+  // Publish post mutation
+  const publishPostMutation = useMutationWrapper(
+    async (id: string) => {
+      const response = await fetch(`/api/posts/${id}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to publish post');
+      }
+      return await response.json();
     },
-    [formData, savePostMutation]
+    {
+      onSuccess: async (result) => {
+        setFormData(prev => ({ ...prev, status: 'published' }));
+        setMessage(`✅ Published: ${result.title}`);
+        // Refresh drafts via API (will remove from list)
+        const response = await fetch('/api/drafts');
+        if (response.ok) {
+          const data = await response.json();
+          setDrafts(data.drafts || []);
+        }
+      },
+      onError: (error) => {
+        setMessage(`❌ Failed to publish: ${error}`);
+      },
+    }
   );
+
+  // Handlers
+  const handleSave = useCallback(() => {
+    setMessage("");
+    savePostMutation.mutate(formData);
+  }, [formData, savePostMutation]);
+
+  const handlePublish = useCallback(() => {
+    if (!currentPostId) {
+      setMessage("❌ Please save the post first before publishing");
+      return;
+    }
+    if (formData.status === 'published') {
+      setMessage("❌ Post is already published");
+      return;
+    }
+    setMessage("");
+    publishPostMutation.mutate(currentPostId);
+  }, [currentPostId, formData.status, publishPostMutation]);
 
   // Keyboard shortcut for save (Cmd/Ctrl + S)
   useEffect(() => {
@@ -174,35 +224,53 @@ export function useEditorViewModel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [savePostMutation.isPending, formData.title, handleSave]);
 
-  const handleLoadDraft = async (title: string) => {
+  const handleLoadDraft = async (id: string) => {
     try {
-      const draftData = await blog.loadPostAsForm(title);
-      if (draftData) {
-        setFormData(draftData);
-        setCurrentDraftTitle(title);
-        setHasUnsavedChanges(false);
-        setMessage(`✅ Loaded draft: ${draftData.title}`);
+      // Use API to fetch post
+      const response = await fetch(`/api/posts/${id}`);
+      if (!response.ok) {
+        throw new Error('Failed to load draft');
       }
+      const post = await response.json();
+      const draftData = {
+        id: post.id,
+        title: post.title,
+        description: post.description || '',
+        content: post.content,
+        status: post.status,
+      };
+      setFormData(draftData);
+      setCurrentPostId(id);
+      setHasUnsavedChanges(false);
+      setMessage(`✅ Loaded draft: ${draftData.title}`);
       setShowDrafts(false);
     } catch (error) {
       setMessage(`❌ Failed to load draft: ${error}`);
     }
   };
 
-  const handleDeleteDraft = async (title: string) => {
+  const handleDeleteDraft = async (id: string) => {
+    // Find the draft to get its title for the confirmation message
+    const draft = drafts.find(d => d.id === id);
+    const title = draft?.title || 'this post';
+
     if (!confirm(`Are you sure you want to delete "${title}"?`)) {
       return;
     }
 
     try {
-      await blog.deletePost(title);
+      const blog = await getBlogApi();
+      await blog.deletePost(id);
       setMessage(`✅ Deleted draft: ${title}`);
 
-      // Refresh drafts
-      const fetchedDrafts = await blog.getDrafts();
-      setDrafts(fetchedDrafts);
+      // Refresh drafts via API
+      const response = await fetch('/api/drafts');
+      if (response.ok) {
+        const data = await response.json();
+        setDrafts(data.drafts || []);
+      }
 
-      if (currentDraftTitle === title) {
+      if (formData.id === id) {
         handleNewDraft();
       }
     } catch (error) {
@@ -212,13 +280,13 @@ export function useEditorViewModel() {
 
   const handleNewDraft = () => {
     setFormData({
+      id: undefined,
       title: "",
       description: "",
-      tags: "",
       content: "",
-      draft: true,
+      status: 'draft',
     });
-    setCurrentDraftTitle(null);
+    setCurrentPostId(null);
     setHasUnsavedChanges(false);
     setMessage("");
   };
@@ -245,12 +313,11 @@ export function useEditorViewModel() {
     // Form state
     formData,
     hasUnsavedChanges,
-    lastAutosave,
+    currentPostId,
 
     // Drafts state
     drafts,
     loadingDrafts,
-    currentDraftTitle,
     showDrafts,
 
     // Preview state
@@ -264,6 +331,7 @@ export function useEditorViewModel() {
 
     // Handlers
     handleSave,
+    handlePublish,
     handleLoadDraft,
     handleDeleteDraft,
     handleNewDraft,
@@ -277,5 +345,6 @@ export function useEditorViewModel() {
     contentLineCount,
     canSave,
     isSaving: savePostMutation.isPending,
+    isPublishing: publishPostMutation.isPending,
   };
 }

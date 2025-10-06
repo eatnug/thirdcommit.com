@@ -5,8 +5,7 @@ import { PostVisibilityPolicy } from '@/domain/blog/policies/post-visibility.pol
 
 export async function getPostBySlugUseCase(
   slug: string,
-  repository: IPostRepository,
-  environment: string = process.env.NODE_ENV || 'development'
+  repository: IPostRepository
 ): Promise<Post> {
   const post = await repository.getPostBySlug(slug)
 
@@ -14,8 +13,8 @@ export async function getPostBySlugUseCase(
     throw new PostNotFoundError(slug)
   }
 
-  // Apply business policy: Block drafts based on environment
-  if (!PostVisibilityPolicy.shouldShowInPublicList(post, environment)) {
+  // Apply business policy: Block drafts
+  if (!PostVisibilityPolicy.shouldShowInPublicList(post)) {
     throw new PostNotFoundError(slug)
   }
 

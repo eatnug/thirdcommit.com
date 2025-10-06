@@ -1,18 +1,21 @@
 export interface Post {
+  id: string
+  slug: string
   title: string
+  status: 'draft' | 'published'
   created_at: Date
-  tags: string[]
+  updated_at: Date
+  published_at: Date | null
   description: string
   content: string
   html: string
   readingTime: string
-  draft: boolean
 }
 
 export interface PostFormData {
+  id?: string
   title: string
   description: string
-  tags: string
   content: string
-  draft: boolean
+  status: 'draft' | 'published'
 }

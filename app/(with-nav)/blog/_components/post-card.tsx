@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app/_components/card'
-import { Badge } from '@/app/_components/badge'
 import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import type { Post } from '@/domain/blog/entities/post.entity'
@@ -10,7 +9,7 @@ export function PostCard({ post }: { post: Post }) {
     <Card>
       <CardHeader>
         <CardTitle>
-          <Link href={`/posts/${encodeURIComponent(post.title)}`} className="hover:underline">
+          <Link href={`/posts/${post.slug}`} className="hover:underline">
             {post.title}
           </Link>
         </CardTitle>
@@ -27,17 +26,10 @@ export function PostCard({ post }: { post: Post }) {
       </CardHeader>
       <CardContent>
         {post.description && (
-          <p className="text-muted-foreground mb-4">
+          <p className="text-muted-foreground">
             {post.description}
           </p>
         )}
-        <div className="flex gap-2 flex-wrap">
-          {post.tags.map(tag => (
-            <Link key={tag} href={`/tags/${tag}`}>
-              <Badge variant="secondary">{tag}</Badge>
-            </Link>
-          ))}
-        </div>
       </CardContent>
     </Card>
   )

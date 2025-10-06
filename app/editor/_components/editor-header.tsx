@@ -1,7 +1,6 @@
 import { Button } from '@/app/_components/button'
 
 interface EditorHeaderProps {
-  lastAutosave: number | null
   draftsCount: number
   showDrafts: boolean
   showPreview: boolean
@@ -10,7 +9,6 @@ interface EditorHeaderProps {
 }
 
 export function EditorHeader({
-  lastAutosave,
   draftsCount,
   showPreview,
   onToggleDrafts,
@@ -21,12 +19,6 @@ export function EditorHeader({
       <h1 className="text-3xl font-bold">Local Post Editor</h1>
 
       <div className="flex items-center gap-4">
-        {lastAutosave && (
-          <span className="text-xs text-gray-500">
-            Autosaved {new Date(lastAutosave).toLocaleTimeString()}
-          </span>
-        )}
-
         <Button onClick={onToggleDrafts} variant="outline" size="sm">
           Drafts ({draftsCount})
         </Button>

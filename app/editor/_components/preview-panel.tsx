@@ -1,7 +1,6 @@
 interface PreviewPanelProps {
   title: string
   description: string
-  tags: string
   content: string
   previewHtml: string
   previewLoading: boolean
@@ -11,7 +10,6 @@ interface PreviewPanelProps {
 export function PreviewPanel({
   title,
   description,
-  tags,
   content,
   previewHtml,
   previewLoading,
@@ -40,18 +38,6 @@ export function PreviewPanel({
             )}
             {description && (
               <p className="text-gray-600 mb-6 text-lg">{description}</p>
-            )}
-            {tags && (
-              <div className="flex flex-wrap gap-2 mb-8">
-                {tags.split(',').map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded-full"
-                  >
-                    {tag.trim()}
-                  </span>
-                ))}
-              </div>
             )}
             <div
               className="prose prose-lg max-w-none

@@ -1,20 +1,17 @@
+import type { Post } from '@/domain/blog/entities/post.entity'
 import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
 
 /**
- * Use case for deleting a post
+ * Use case for retrieving a post by its ID (ULID)
  *
  * In volatility-based hexagonal architecture:
  * - This is TIER 3 (STABLE) - business logic inside the hexagon
  * - Depends on port interface (IPostRepository), not concrete implementation
- * - Validates post exists before deletion
+ * - Returns post or null if not found
  */
-export async function deletePostUseCase(
+export async function getPostByIdUseCase(
   id: string,
   repository: IPostRepository
-): Promise<void> {
-  const post = await repository.getPostById(id)
-  if (!post) {
-    throw new Error('Post not found')
-  }
-  return repository.deletePost(post.title)
+): Promise<Post | null> {
+  return await repository.getPostById(id)
 }
