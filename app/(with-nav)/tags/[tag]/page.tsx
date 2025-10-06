@@ -6,10 +6,15 @@ import { Badge } from '@/app/_components/badge'
 
 export async function generateStaticParams() {
   const tags = await getAllTagsUseCase()
+  if (tags.length === 0) {
+    return [] // Return empty array when no tags exist
+  }
   return tags.map(tag => ({
     tag,
   }))
 }
+
+export const dynamicParams = false // Disable dynamic params for static export
 
 export default async function TagPage({
   params

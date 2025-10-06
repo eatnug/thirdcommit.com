@@ -16,7 +16,12 @@ export interface IPostRepository {
   getPosts(): Promise<Post[]>
 
   /**
-   * Retrieve a single post by its slug
+   * Retrieve a single post by its title
+   */
+  getPostByTitle(title: string): Promise<Post | null>
+
+  /**
+   * Retrieve a single post by its slug (deprecated, use getPostByTitle)
    */
   getPostBySlug(slug: string): Promise<Post | null>
 
@@ -29,10 +34,10 @@ export interface IPostRepository {
     tags: string[]
     content: string
     draft: boolean
-  }): Promise<{ slug: string; filename: string; path: string }>
+  }): Promise<{ title: string; filename: string; path: string }>
 
   /**
-   * Delete a post by its slug
+   * Delete a post by its title
    */
-  deletePost(slug: string): Promise<void>
+  deletePost(title: string): Promise<void>
 }
