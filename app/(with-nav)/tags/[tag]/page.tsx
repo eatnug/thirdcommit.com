@@ -36,7 +36,7 @@ export default async function TagPage({
 
       <div className="grid gap-6">
         {posts.map(post => (
-          <PostCard key={post.slug} post={post} />
+          <PostCard key={post.title} post={post} />
         ))}
       </div>
     </div>

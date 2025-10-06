@@ -1,9 +1,17 @@
 import type { Post } from '../entities/post.entity'
-import type { IPostRepository } from '../ports/post-repository.port'
-import { postRepository } from '@/features/blog/data/repositories/post.repository'
 
-export async function getDraftsUseCase(
-  repository: IPostRepository = postRepository
-): Promise<Post[]> {
-  return repository.getPosts()
+export async function getDraftsUseCase(): Promise<Post[]> {
+  if (typeof window === 'undefined') {
+    // Server-side: use filesystem
+    const { postRepository } = await import('@/features/blog/data/repositories/post.repository')
+    return postRepository.getPosts()
+  }
+
+  // Client-side: use API
+  const response = await fetch('/api/drafts')
+  if (!response.ok) {
+    throw new Error('Failed to fetch drafts')
+  }
+  const data = await response.json()
+  return data.drafts || []
 }

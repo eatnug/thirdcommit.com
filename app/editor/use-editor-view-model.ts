@@ -43,7 +43,7 @@ export function useEditorViewModel() {
   // Drafts state
   const [drafts, setDrafts] = useState<Post[]>([]);
   const [loadingDrafts, setLoadingDrafts] = useState(false);
-  const [currentDraftSlug, setCurrentDraftSlug] = useState<string | null>(null);
+  const [currentDraftTitle, setCurrentDraftTitle] = useState<string | null>(null);
   const [showDrafts, setShowDrafts] = useState(false);
 
   // Preview state
@@ -180,12 +180,12 @@ export function useEditorViewModel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [savePostMutation.isPending, formData.title, handleSave]);
 
-  const handleLoadDraft = async (slug: string) => {
+  const handleLoadDraft = async (title: string) => {
     try {
-      const draftData = await loadPostAsFormUseCase(slug);
+      const draftData = await loadPostAsFormUseCase(title);
       if (draftData) {
         setFormData(draftData);
-        setCurrentDraftSlug(slug);
+        setCurrentDraftTitle(title);
         setHasUnsavedChanges(false);
         setMessage(`✅ Loaded draft: ${draftData.title}`);
       }
@@ -195,20 +195,20 @@ export function useEditorViewModel() {
     }
   };
 
-  const handleDeleteDraft = async (slug: string) => {
-    if (!confirm(`Are you sure you want to delete "${slug}"?`)) {
+  const handleDeleteDraft = async (title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) {
       return;
     }
 
     try {
-      await deletePostUseCase(slug);
-      setMessage(`✅ Deleted draft: ${slug}`);
+      await deletePostUseCase(title);
+      setMessage(`✅ Deleted draft: ${title}`);
 
       // Refresh drafts
       const fetchedDrafts = await getDraftsUseCase();
       setDrafts(fetchedDrafts);
 
-      if (currentDraftSlug === slug) {
+      if (currentDraftTitle === title) {
         handleNewDraft();
       }
     } catch (error) {
@@ -224,7 +224,7 @@ export function useEditorViewModel() {
       content: "",
       draft: true,
     });
-    setCurrentDraftSlug(null);
+    setCurrentDraftTitle(null);
     setHasUnsavedChanges(false);
     setMessage("");
   };
@@ -256,7 +256,7 @@ export function useEditorViewModel() {
     // Drafts state
     drafts,
     loadingDrafts,
-    currentDraftSlug,
+    currentDraftTitle,
     showDrafts,
 
     // Preview state

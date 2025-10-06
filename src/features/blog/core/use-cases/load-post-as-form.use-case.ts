@@ -1,22 +1,41 @@
 import type { PostFormData } from '../entities/post.entity'
-import type { IPostRepository } from '../ports/post-repository.port'
-import { postRepository } from '@/features/blog/data/repositories/post.repository'
 
 export async function loadPostAsFormUseCase(
-  slug: string,
-  repository: IPostRepository = postRepository
+  title: string
 ): Promise<PostFormData | null> {
-  const post = await repository.getPostBySlug(slug)
+  if (typeof window === 'undefined') {
+    // Server-side: use filesystem
+    const { postRepository } = await import('@/features/blog/data/repositories/post.repository')
+    const post = await postRepository.getPostByTitle(title)
 
-  if (!post) {
-    return null
+    if (!post) {
+      return null
+    }
+
+    return {
+      title: post.title,
+      description: post.description || '',
+      tags: post.tags.join(', '),
+      content: post.content,
+      draft: post.draft,
+    }
   }
 
+  // Client-side: use API
+  const response = await fetch(`/api/posts/${encodeURIComponent(title)}`)
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null
+    }
+    throw new Error('Failed to load post')
+  }
+
+  const data = await response.json()
   return {
-    title: post.title,
-    description: post.description || '',
-    tags: post.tags.join(', '),
-    content: post.content,
-    draft: post.draft,
+    title: data.title,
+    description: data.description || '',
+    tags: Array.isArray(data.tags) ? data.tags.join(', ') : '',
+    content: data.content,
+    draft: data.draft,
   }
 }

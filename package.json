@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "export": "npm run build && touch out/.nojekyll && cp public/CNAME out/CNAME"
+    "export": "NEXT_PUBLIC_STATIC_EXPORT=true next build && touch out/.nojekyll && cp public/CNAME out/CNAME"
   },
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.7",

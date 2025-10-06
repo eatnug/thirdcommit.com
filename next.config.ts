@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Only use static export in production, dev needs API routes for the editor
-  ...(process.env.NODE_ENV === 'production' && { output: 'export' }),
+  ...(process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true' && { output: 'export' }),
   images: {
     unoptimized: true,
   },

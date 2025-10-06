@@ -1,10 +1,9 @@
 import type { Post } from "@/features/blog/core/entities/post.entity";
 
 export interface PostDto {
-  slug: string;
   frontmatter: {
     title: string;
-    date: string;
+    created_at: string;
     tags: string[];
     description?: string;
     draft?: boolean;
@@ -19,9 +18,8 @@ export interface PostDto {
  */
 export function postDtoToDomain(dto: PostDto): Post {
   return {
-    slug: dto.slug,
     title: dto.frontmatter.title,
-    date: new Date(dto.frontmatter.date),
+    created_at: new Date(dto.frontmatter.created_at),
     tags: dto.frontmatter.tags,
     description: dto.frontmatter.description ?? "",
     content: dto.content,

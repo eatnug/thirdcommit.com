@@ -17,7 +17,8 @@ export async function GET(
   }
 
   try {
-    const { slug } = await params
+    const { slug: encodedTitle } = await params
+    const title = decodeURIComponent(encodedTitle)
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -26,7 +27,7 @@ export async function GET(
     const matter = require('gray-matter')
 
     const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
-    const filePath = path.join(postsDir, `${slug}.md`)
+    const filePath = path.join(postsDir, `${title}.md`)
 
     if (!fs.existsSync(filePath)) {
       return NextResponse.json(
@@ -39,13 +40,12 @@ export async function GET(
     const { data, content } = matter(fileContents)
 
     return NextResponse.json({
-      slug,
       title: data.title,
       description: data.description,
       tags: data.tags || [],
       content,
       draft: data.draft || false,
-      date: data.date,
+      created_at: data.created_at,
     })
   } catch (error) {
     console.error('Error fetching post:', error)
@@ -68,14 +68,15 @@ export async function DELETE(
   }
 
   try {
-    const { slug } = await params
+    const { slug: encodedTitle } = await params
+    const title = decodeURIComponent(encodedTitle)
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const fs = require('fs')
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const path = require('path')
 
     const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
-    const filePath = path.join(postsDir, `${slug}.md`)
+    const filePath = path.join(postsDir, `${title}.md`)
 
     if (!fs.existsSync(filePath)) {
       return NextResponse.json(
@@ -88,7 +89,7 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      slug,
+      title,
     })
   } catch (error) {
     console.error('Error deleting post:', error)

@@ -29,21 +29,21 @@ export class FileSystemPostRepository implements IPostRepository {
       files
         .filter(file => file.endsWith('.md'))
         .map(async file => {
-          const slug = file.replace(/\.md$/, '')
-          return this.getPostBySlug(slug)
+          const title = file.replace(/\.md$/, '')
+          return this.getPostByTitle(title)
         })
     )
 
     const validPosts = dtos
       .filter((post): post is Post => post !== null)
       .sort((a, b) =>
-        new Date(b.date).getTime() - new Date(a.date).getTime()
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       )
 
     return validPosts
   }
 
-  async getPostBySlug(slug: string): Promise<Post | null> {
+  async getPostByTitle(title: string): Promise<Post | null> {
     try {
       // Dynamic imports to prevent bundling server-only code in client
       const [fs, path, matter, readingTime] = await Promise.all([
@@ -54,16 +54,20 @@ export class FileSystemPostRepository implements IPostRepository {
       ])
 
       const postsDirectory = await this.getPostsDirectory()
-      const fullPath = path.join(postsDirectory, `${slug}.md`)
+      const fullPath = path.join(postsDirectory, `${title}.md`)
+
+      if (!fs.existsSync(fullPath)) {
+        return null
+      }
+
       const fileContents = fs.readFileSync(fullPath, 'utf8')
       const { data, content } = matter.default(fileContents)
       const stats = readingTime.default(content)
 
       const dto: PostDto = {
-        slug,
         frontmatter: {
           title: data.title,
-          date: data.date,
+          created_at: data.created_at || data.date, // fallback for old posts
           tags: data.tags || [],
           description: data.description,
           draft: data.draft || false,
@@ -79,26 +83,29 @@ export class FileSystemPostRepository implements IPostRepository {
     }
   }
 
+  // Keep for backward compatibility
+  async getPostBySlug(slug: string): Promise<Post | null> {
+    return this.getPostByTitle(slug)
+  }
+
   async createPost(data: {
     title: string
     description?: string
     tags: string[]
     content: string
     draft: boolean
-  }): Promise<{ slug: string; filename: string; path: string }> {
+  }): Promise<{ title: string; filename: string; path: string }> {
     // Dynamic imports to prevent bundling server-only code in client
     const [fs, path] = await Promise.all([
       import('fs'),
       import('path')
     ])
 
-    const slug = this.generateSlug(data.title)
-    const date = new Date().toISOString().split('T')[0]
-    const filename = `${slug}.md`
+    const filename = `${data.title}.md`
 
     const frontmatter = `---
 title: "${data.title}"
-date: "${date}"
+created_at: "${new Date().toISOString()}"
 tags: ${JSON.stringify(data.tags)}
 ${data.description ? `description: "${data.description}"` : ''}
 draft: ${data.draft}
@@ -116,38 +123,31 @@ ${data.content}
     const filePath = path.join(postsDir, filename)
 
     if (fs.existsSync(filePath)) {
-      throw new Error(`File ${filename} already exists`)
+      throw new Error(`Post with title "${data.title}" already exists`)
     }
 
     fs.writeFileSync(filePath, frontmatter, 'utf-8')
 
     return {
-      slug,
+      title: data.title,
       filename,
       path: filePath,
     }
   }
 
-  async deletePost(slug: string): Promise<void> {
+  async deletePost(title: string): Promise<void> {
     const [fs, path] = await Promise.all([
       import('fs'),
       import('path')
     ])
 
     const postsDir = path.join(process.cwd(), 'src/storage', 'posts')
-    const filePath = path.join(postsDir, `${slug}.md`)
+    const filePath = path.join(postsDir, `${title}.md`)
 
     if (!fs.existsSync(filePath)) {
-      throw new Error(`Post ${slug} not found`)
+      throw new Error(`Post "${title}" not found`)
     }
 
     fs.unlinkSync(filePath)
-  }
-
-  private generateSlug(title: string): string {
-    return title
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '')
   }
 }

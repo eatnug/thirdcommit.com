@@ -51,7 +51,7 @@ export default function EditorPage() {
         <DraftsDropdown
           drafts={vm.drafts}
           loading={vm.loadingDrafts}
-          currentDraftSlug={vm.currentDraftSlug}
+          currentDraftTitle={vm.currentDraftTitle}
           isOpen={vm.showDrafts}
           onClose={vm.closeDrafts}
           onLoadDraft={vm.handleLoadDraft}

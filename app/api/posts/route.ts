@@ -39,17 +39,12 @@ export async function POST(request: NextRequest) {
       fs.mkdirSync(postsDir, { recursive: true })
     }
 
-    const slug = data.title
-      .toLowerCase()
-      .replace(/[^a-z0-9가-힣]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-
-    const filename = `${slug}.md`
+    const filename = `${data.title}.md`
     const filePath = path.join(postsDir, filename)
 
     if (fs.existsSync(filePath)) {
       return NextResponse.json(
-        { error: `File ${filename} already exists` },
+        { error: `Post with title "${data.title}" already exists` },
         { status: 409 }
       )
     }
@@ -59,7 +54,7 @@ export async function POST(request: NextRequest) {
       `title: "${data.title}"`,
       data.description ? `description: "${data.description}"` : '',
       `tags: [${data.tags.map(tag => `"${tag}"`).join(', ')}]`,
-      `date: "${new Date().toISOString()}"`,
+      `created_at: "${new Date().toISOString()}"`,
       `draft: ${data.draft}`,
       '---',
       '',
@@ -75,7 +70,7 @@ export async function POST(request: NextRequest) {
         success: true,
         filename,
         path: filePath,
-        slug,
+        title: data.title,
       },
       { status: 201 }
     )

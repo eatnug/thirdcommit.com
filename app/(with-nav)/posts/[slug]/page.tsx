@@ -10,7 +10,7 @@ import { format } from 'date-fns'
 export async function generateStaticParams() {
   const posts = await getPostsUseCase()
   return posts.map(post => ({
-    slug: post.slug,
+    slug: encodeURIComponent(post.title),
   }))
 }
 
@@ -20,9 +20,10 @@ export default async function PostPage({
   params: Promise<{ slug: string }>
 }) {
   const { slug } = await params
+  const title = decodeURIComponent(slug)
 
   try {
-    const post = await getPostBySlugUseCase(slug)
+    const post = await getPostBySlugUseCase(title)
 
     return (
       <article className="max-w-3xl mx-auto">
@@ -42,7 +43,7 @@ export default async function PostPage({
           <div className="flex items-center gap-4 text-muted-foreground mb-4">
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              {format(post.date, 'MMMM dd, yyyy')}
+              {format(post.created_at, 'MMMM dd, yyyy')}
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />

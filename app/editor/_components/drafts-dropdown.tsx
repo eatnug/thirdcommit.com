@@ -4,18 +4,18 @@ import type { Post } from '@/features/blog/core/entities/post.entity'
 interface DraftsDropdownProps {
   drafts: Post[]
   loading: boolean
-  currentDraftSlug: string | null
+  currentDraftTitle: string | null
   isOpen: boolean
   onClose: () => void
-  onLoadDraft: (slug: string) => void
-  onDeleteDraft: (slug: string) => void
+  onLoadDraft: (title: string) => void
+  onDeleteDraft: (title: string) => void
   onNewDraft: () => void
 }
 
 export function DraftsDropdown({
   drafts,
   loading,
-  currentDraftSlug,
+  currentDraftTitle,
   isOpen,
   onClose,
   onLoadDraft,
@@ -50,20 +50,20 @@ export function DraftsDropdown({
           ) : (
             drafts.map((draft) => (
               <div
-                key={draft.slug}
+                key={draft.title}
                 className={`mb-2 rounded border p-2 hover:bg-gray-50 cursor-pointer ${
-                  currentDraftSlug === draft.slug
+                  currentDraftTitle === draft.title
                     ? 'bg-blue-50 border-blue-300'
                     : 'border-gray-200'
                 }`}
-                onClick={() => onLoadDraft(draft.slug)}
+                onClick={() => onLoadDraft(draft.title)}
               >
                 <div className="flex items-start justify-between mb-1">
                   <div className="flex-1">
                     <h4 className="font-medium text-sm truncate">
                       {draft.title}
                     </h4>
-                    <p className="text-xs text-gray-500">{draft.date.toString()}</p>
+                    <p className="text-xs text-gray-500">{draft.created_at.toString()}</p>
                     {draft.tags.length > 0 && (
                       <div className="flex gap-1 mt-1 flex-wrap">
                         {draft.tags.slice(0, 3).map((tag, i) => (
@@ -85,7 +85,7 @@ export function DraftsDropdown({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
-                      onDeleteDraft(draft.slug)
+                      onDeleteDraft(draft.title)
                     }}
                     className="text-red-500 hover:text-red-700 text-sm ml-2"
                   >

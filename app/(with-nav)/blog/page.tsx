@@ -10,7 +10,7 @@ export default async function BlogPage() {
       <h1 className="text-4xl font-bold mb-8">Blog Posts</h1>
       <div className="grid gap-6">
         {publishedPosts.map(post => (
-          <PostCard key={post.slug} post={post} />
+          <PostCard key={post.title} post={post} />
         ))}
       </div>
     </div>
