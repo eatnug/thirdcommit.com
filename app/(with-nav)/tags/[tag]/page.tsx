@@ -1,11 +1,10 @@
 import { notFound } from 'next/navigation'
-import { getAllTagsUseCase } from '@/features/blog/core/use-cases/get-all-tags.use-case'
-import { getPostsByTagUseCase } from '@/features/blog/core/use-cases/get-posts-by-tag.use-case'
+import { blog } from '@/domain/blog'
 import { PostCard } from '@/app/(with-nav)/blog/_components/post-card'
 import { Badge } from '@/app/_components/badge'
 
 export async function generateStaticParams() {
-  const tags = await getAllTagsUseCase()
+  const tags = await blog.getAllTags()
   // Return at least one dummy param for static export, even if no tags exist
   // The actual page will handle the notFound() case
   if (tags.length === 0) {
@@ -24,7 +23,7 @@ export default async function TagPage({
   params: Promise<{ tag: string }>
 }) {
   const { tag } = await params
-  const posts = await getPostsByTagUseCase(tag)
+  const posts = await blog.getPostsByTag(tag)
 
   if (posts.length === 0) {
     notFound()

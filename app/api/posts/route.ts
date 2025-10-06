@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const path = require('path')
 
-    const postsDir = path.join(process.cwd(), 'src', 'storage', 'posts')
+    const postsDir = path.join(process.cwd(), 'storage', 'posts')
 
     if (!fs.existsSync(postsDir)) {
       fs.mkdirSync(postsDir, { recursive: true })

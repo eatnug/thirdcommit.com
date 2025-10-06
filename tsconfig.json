@@ -20,10 +20,8 @@
     ],
     "paths": {
       "@/*": ["./*"],
-      "@/features/*": ["./src/features/*"],
-      "@/shared/*": ["./src/shared/*"],
+      "@/domain/*": ["./src/domain/*"],
       "@/infrastructure/*": ["./src/infrastructure/*"],
-      "@/presentation/*": ["./src/presentation/*"],
       "@/app/*": ["./app/*"]
     }
   },

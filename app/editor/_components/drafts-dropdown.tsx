@@ -1,5 +1,5 @@
 import { Button } from '@/app/_components/button'
-import type { Post } from '@/features/blog/core/entities/post.entity'
+import type { Post } from '@/domain/blog/entities/post.entity'
 
 interface DraftsDropdownProps {
   drafts: Post[]

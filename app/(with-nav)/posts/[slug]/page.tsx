@@ -1,14 +1,13 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { getPostsUseCase } from '@/features/blog/core/use-cases/get-posts.use-case'
-import { getPostBySlugUseCase } from '@/features/blog/core/use-cases/get-post-by-slug.use-case'
+import { blog } from '@/domain/blog'
 import { Badge } from '@/app/_components/badge'
 import { Separator } from '@/app/_components/separator'
 import { Calendar, Clock, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
 
 export async function generateStaticParams() {
-  const posts = await getPostsUseCase()
+  const posts = await blog.getPosts()
   return posts.map(post => ({
     slug: encodeURIComponent(post.title),
   }))
@@ -23,7 +22,7 @@ export default async function PostPage({
   const title = decodeURIComponent(slug)
 
   try {
-    const post = await getPostBySlugUseCase(title)
+    const post = await blog.getPost(title)
 
     return (
       <article className="max-w-3xl mx-auto">

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/app
 import { Badge } from '@/app/_components/badge'
 import { Calendar, Clock } from 'lucide-react'
 import { format } from 'date-fns'
-import type { Post } from '@/features/blog/core/entities/post.entity'
+import type { Post } from '@/domain/blog/entities/post.entity'
 
 export function PostCard({ post }: { post: Post }) {
   return (

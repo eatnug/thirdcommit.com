@@ -1,15 +1,14 @@
 import Link from 'next/link'
-import { getAllTagsUseCase } from '@/features/blog/core/use-cases/get-all-tags.use-case'
-import { getPostsByTagUseCase } from '@/features/blog/core/use-cases/get-posts-by-tag.use-case'
+import { blog } from '@/domain/blog'
 import { Badge } from '@/app/_components/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/_components/card'
 
 export default async function TagsPage() {
-  const tags = await getAllTagsUseCase()
+  const tags = await blog.getAllTags()
   const tagCounts = await Promise.all(
     tags.map(async tag => ({
       tag,
-      count: (await getPostsByTagUseCase(tag)).length
+      count: (await blog.getPostsByTag(tag)).length
     }))
   )
 

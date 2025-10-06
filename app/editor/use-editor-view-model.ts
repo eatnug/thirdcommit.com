@@ -1,13 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { getDraftsUseCase } from "@/features/blog/core/use-cases/get-drafts.use-case";
-import { loadPostAsFormUseCase } from "@/features/blog/core/use-cases/load-post-as-form.use-case";
-import { deletePostUseCase } from "@/features/blog/core/use-cases/delete-post.use-case";
-import { savePostUseCase } from "@/features/blog/core/use-cases/save-post.use-case";
-import { useMutationWrapper } from "@/shared/hooks";
-import { useBeforeUnload } from "@/app/_hooks";
-import type { Post } from "@/features/blog/core/entities/post.entity";
-
-import { markdownService } from "@/shared/services/markdown.service";
+import { blog, type Post } from "@/domain/blog";
+import { useMutationWrapper, useBeforeUnload } from "@/app/_adapters/_hooks";
+import { markdownService } from "@/domain/blog/services/markdown.service";
 
 export async function renderMarkdown(content: string): Promise<string> {
   return markdownService.toHtml(content);
@@ -105,7 +99,7 @@ export function useEditorViewModel() {
     const loadDrafts = async () => {
       setLoadingDrafts(true);
       try {
-        const fetchedDrafts = await getDraftsUseCase();
+        const fetchedDrafts = await blog.getDrafts();
         setDrafts(fetchedDrafts);
       } catch (error) {
         console.error("Failed to fetch drafts:", error);
@@ -140,14 +134,14 @@ export function useEditorViewModel() {
   }, [formData.content, showPreview]);
 
   // Save post mutation
-  const savePostMutation = useMutationWrapper(savePostUseCase, {
+  const savePostMutation = useMutationWrapper(blog.savePost, {
     onSuccess: async (result) => {
       setMessage(`✅ Saved: ${result.filename}`);
       setHasUnsavedChanges(false);
       localStorage.removeItem(AUTOSAVE_KEY);
       setLastAutosave(null);
       // Refresh drafts
-      const fetchedDrafts = await getDraftsUseCase();
+      const fetchedDrafts = await blog.getDrafts();
       setDrafts(fetchedDrafts);
     },
     onError: (error) => {
@@ -182,7 +176,7 @@ export function useEditorViewModel() {
 
   const handleLoadDraft = async (title: string) => {
     try {
-      const draftData = await loadPostAsFormUseCase(title);
+      const draftData = await blog.loadPostAsForm(title);
       if (draftData) {
         setFormData(draftData);
         setCurrentDraftTitle(title);
@@ -201,11 +195,11 @@ export function useEditorViewModel() {
     }
 
     try {
-      await deletePostUseCase(title);
+      await blog.deletePost(title);
       setMessage(`✅ Deleted draft: ${title}`);
 
       // Refresh drafts
-      const fetchedDrafts = await getDraftsUseCase();
+      const fetchedDrafts = await blog.getDrafts();
       setDrafts(fetchedDrafts);
 
       if (currentDraftTitle === title) {
