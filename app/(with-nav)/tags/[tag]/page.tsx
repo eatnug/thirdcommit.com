@@ -6,8 +6,10 @@ import { Badge } from '@/app/_components/badge'
 
 export async function generateStaticParams() {
   const tags = await getAllTagsUseCase()
+  // Return at least one dummy param for static export, even if no tags exist
+  // The actual page will handle the notFound() case
   if (tags.length === 0) {
-    return [] // Return empty array when no tags exist
+    return [{ tag: '_no_tags_' }]
   }
   return tags.map(tag => ({
     tag,
