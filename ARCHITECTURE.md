@@ -1,83 +1,174 @@
-# Architecture Documentation
+# Frontend Architecture Documentation
 
 ## Overview
 
-Feature-based hexagonal architecture (Ports & Adapters) combining Next.js App Router conventions with domain-driven design principles.
+**Volatility-based hexagonal architecture** for Next.js applications, combining:
+- **Hexagonal architecture** (Ports & Adapters) for technology independence
+- **Volatility-based decomposition** for explicit replaceability boundaries
+- **Feature-first organization** for scalability and "screaming architecture"
+
+### Core Principle
+
+Code is organized by **change frequency** and **replaceability**, not just technical layers:
+
+```
+🔴 TIER 1 (Volatile)   → Dump when changing frameworks (React → Vue)
+🟡 TIER 2 (Moderate)   → Replace when changing infrastructure (FS → API)
+🟢 TIER 3 (Stable)     → Never dump - your business logic
+```
+
+---
 
 ## Directory Structure
 
 ```
-app/
-├── _lib/                          # Shared utilities (excluded from routing)
-│   ├── components/ui/             # Common UI components (Button, Card, Badge, etc.)
-│   └── hooks/                     # Generic hooks (useLocalStorage, useAutosave, etc.)
+app/                                    # 🔴 TIER 1: VOLATILE (Framework Layer)
+├── (routes)/                          # Next.js route groups
+│   └── [feature]/
+│       ├── page.tsx                   # Route handlers
+│       └── _ui/                       # Route-specific components
 │
-├── (with-nav)/                    # Route group with navigation
-│   ├── blog/
-│   │   ├── _components/           # Blog-specific UI components
-│   │   │   └── post-card.tsx
-│   │   └── page.tsx              # /blog route
-│   ├── posts/[slug]/
-│   │   └── page.tsx              # /posts/[slug] route
-│   └── tags/
-│       ├── page.tsx              # /tags route
-│       └── [tag]/
-│           └── page.tsx          # /tags/[tag] route
+├── _adapters/                         # 🔴 TIER 1: Framework adapters
+│   └── hooks/                         # React Query wrappers
+│       ├── use-query-wrapper.ts       # Generic query wrapper
+│       ├── use-mutation-wrapper.ts    # Generic mutation wrapper
+│       └── use-posts.ts               # Feature-specific (optional)
 │
-├── editor/
-│   └── page.tsx                  # /editor route
-│
-└── api/
-    └── posts/
-        └── route.ts              # POST /api/posts (PRIMARY ADAPTER)
+└── _components/                       # 🔴 TIER 1: Shared UI
+    └── ui/                            # Design system components
 
 src/
-├── features/                     # Feature modules (framework-agnostic)
-│   ├── blog/
-│   │   ├── core/                # Business logic (INSIDE THE HEXAGON)
-│   │   │   ├── entities/        # Domain models (Post)
-│   │   │   ├── ports/           # Port interfaces (IPostRepository)
-│   │   │   ├── use-cases/       # Business operations (getPosts, getPostBySlug, etc.)
-│   │   │   └── errors/          # Domain-specific errors
-│   │   └── data/                # Data access layer (SECONDARY ADAPTERS)
-│   │       ├── models/          # DTOs with transformation methods
-│   │       └── repositories/    # Adapter implementations
-│   │           ├── post.repository.ts              # Provider (exports postRepository)
-│   │           ├── post.filesystem.repository.ts  # FileSystem implementation
-│   │           └── post.api.repository.ts         # API implementation (future)
-│   │
-│   └── editor/
-│       ├── core/                # Editor business logic
-│       │   ├── entities/        # Editor domain models (AutosaveDraft, EditorVersion)
-│       │   ├── ports/           # Port interfaces (IEditorRepository)
-│       │   ├── use-cases/       # Editor operations (save-autosave, restore-autosave, etc.)
-│       │   └── form/            # Form controller (framework-agnostic logic)
-│       │       └── editor-form.controller.ts  # Pure form validation & update logic
-│       ├── data/                # Editor data access (SECONDARY ADAPTERS)
-│       │   └── repositories/
-│       │       ├── editor.repository.ts                  # Provider (exports editorRepository)
-│       │       └── editor.localstorage.repository.ts    # LocalStorage implementation
-│       └── hooks/               # Editor-specific React hooks (PRIMARY ADAPTERS)
-│           └── use-editor-state.ts  # React adapter wrapping form controller
-│
-├── shared/                       # Cross-domain utilities
-│   ├── hooks/                   # Generic React Query wrappers
-│   │   ├── use-query-wrapper.ts
-│   │   └── use-mutation-wrapper.ts
-│   ├── services/                # Shared services (markdown, etc.)
-│   ├── utils/                   # Utility functions
-│   ├── lib/                     # Third-party integrations
-│   └── constants/               # Constants
-│
-└── infrastructure/               # Infrastructure configuration
-    └── query-client/            # React Query setup
+└── features/                          # Feature-first organization
+    ├── blog/
+    │   ├── core/                      # 🟢 TIER 3: STABLE (Business Logic)
+    │   │   ├── entities/              # Domain models
+    │   │   │   └── post.entity.ts
+    │   │   ├── policies/              # Business rules (NEW!)
+    │   │   │   └── post-visibility.policy.ts
+    │   │   ├── ports/                 # Contracts/interfaces
+    │   │   │   └── post-repository.port.ts
+    │   │   ├── use-cases/             # Business operations
+    │   │   │   ├── get-posts.use-case.ts
+    │   │   │   └── get-post-by-slug.use-case.ts
+    │   │   └── errors/                # Domain errors
+    │   │       └── post.error.ts
+    │   │
+    │   ├── infrastructure/            # 🟡 TIER 2: MODERATE (Adapters)
+    │   │   ├── repositories/          # Data access implementations
+    │   │   │   ├── post.repository.ts           # Provider
+    │   │   │   ├── post.filesystem.repository.ts
+    │   │   │   ├── post.api.repository.ts       # (future)
+    │   │   │   └── post.cache.repository.ts     # (future)
+    │   │   └── dto/                   # Data transformations
+    │   │       └── post.dto.ts
+    │   │
+    │   └── index.ts                   # PUBLIC API (barrel export)
+    │
+    └── shared/                        # Cross-feature code
+        ├── core/                      # 🟢 TIER 3: Shared business logic
+        ├── infrastructure/            # 🟡 TIER 2: Shared adapters
+        └── utils/                     # 🔴 TIER 1: Helper functions
 ```
+
+---
+
+## The Three Tiers (Volatility Model)
+
+### 🔴 TIER 1: Highly Volatile (Framework Layer)
+
+**Location:** `app/`
+
+**Lifespan:** Until framework migration
+
+**Change frequency:** Weekly/Monthly
+
+**Dump when:**
+- Migrating React → Vue/Svelte
+- Switching Next.js → Remix/Vite
+- Complete UI redesign
+
+**Contains:**
+- Next.js routes and pages
+- React components and hooks
+- Framework-specific adapters
+- UI styling (CSS, Tailwind)
+
+**Example:**
+```typescript
+// app/(routes)/blog/page.tsx
+import { blog } from '@/features/blog'
+
+export default async function BlogPage() {
+  const posts = await blog.getPosts()
+  return <PostList posts={posts} />
+}
+```
+
+---
+
+### 🟡 TIER 2: Moderate Volatility (Infrastructure Layer)
+
+**Location:** `src/features/[domain]/infrastructure/`
+
+**Lifespan:** Until infrastructure change
+
+**Change frequency:** Quarterly/Bi-annually
+
+**Replace when:**
+- Switching data sources (filesystem → CMS → API)
+- Changing databases
+- Adding caching layers
+
+**Contains:**
+- Repository implementations
+- Data transformation (DTOs)
+- External service wrappers
+
+**Example:**
+```typescript
+// src/features/blog/infrastructure/repositories/post.filesystem.repository.ts
+export class FileSystemPostRepository implements IPostRepository {
+  async getPosts(): Promise<Post[]> {
+    const fs = await import('fs')
+    // Read from filesystem, transform to domain entities
+  }
+}
+```
+
+---
+
+### 🟢 TIER 3: Stable Core (Business Logic)
+
+**Location:** `src/features/[domain]/core/`
+
+**Lifespan:** Lifetime of the business
+
+**Change frequency:** Yearly/Multi-year
+
+**Never dump** (this survives all technology changes)
+
+**Contains:**
+- Business rules and policies
+- Domain entities
+- Port interfaces (contracts)
+- Use cases
+- Domain errors
+
+**Example:**
+```typescript
+// src/features/blog/core/policies/post-visibility.policy.ts
+export class PostVisibilityPolicy {
+  static shouldShowInPublicList(post: Post, environment: string): boolean {
+    return environment === 'production' ? !post.draft : true
+  }
+}
+```
+
+---
 
 ## Hexagonal Architecture (Ports & Adapters)
 
-### Core Principles
-
-**The Hexagon** represents the application's business logic, isolated from external concerns:
+### The Hexagon
 
 ```
                     PRIMARY ADAPTERS
@@ -90,6 +181,7 @@ src/
     │                                         │
     │  ┌──────────────────────────────────┐  │
     │  │  Entities                        │  │
+    │  │  Policies (Business Rules)       │  │
     │  │  Use Cases                       │  │
     │  │  Ports (Interfaces)              │  │
     │  └──────────────────────────────────┘  │
@@ -111,618 +203,417 @@ PRIMARY ADAPTERS → CORE ← SECONDARY ADAPTERS
 
 Detailed flow:
 ```
-app/                             (PRIMARY ADAPTERS - UI)
+app/                                  (🔴 TIER 1 - UI)
   ↓ depends on
-src/features/[domain]/hooks/     (PRIMARY ADAPTERS - React Query)
+src/features/[domain]/index.ts        (Public API)
   ↓ depends on
-src/features/[domain]/core/      (CORE - Business Logic)
+src/features/[domain]/core/           (🟢 TIER 3 - Business Logic)
   ↓ depends on (interfaces only)
-src/features/[domain]/core/ports/   (CORE - Port Interfaces)
+src/features/[domain]/core/ports/     (🟢 TIER 3 - Contracts)
   ↑ implemented by
-src/features/[domain]/data/      (SECONDARY ADAPTERS - Data Access)
+src/features/[domain]/infrastructure/ (🟡 TIER 2 - Adapters)
 ```
 
-### Layer Responsibilities
+---
 
-#### PRIMARY ADAPTERS (Driving)
-**Purpose**: Trigger application functionality
+## Key Patterns
 
-**app/** - Next.js routes and pages
-- Route definitions (page.tsx, layout.tsx)
-- Server/Client components
-- Route-specific UI components (_components/)
-- **Role**: UI adapter that drives use cases
+### 1. Business Policies (NEW!)
 
-**app/api/** - API routes
-- HTTP request handlers
-- **Role**: API adapter that drives use cases
-- Example: `POST /api/posts` → `createPost` use case
+Extract business rules into reusable policy classes:
 
-**src/features/[domain]/hooks/** - React hooks
-- Wrap use-cases with React Query
-- Domain logic + state management
-- **Role**: React adapter that drives use cases
-- Example: `usePosts` calls `getPostsUseCase`
-
-#### THE HEXAGON (Core Business Logic)
-**Purpose**: Contains pure business logic, isolated from external concerns
-
-**src/features/[domain]/core/** - Application core
-- **Entities**: Domain models (pure TypeScript types/interfaces)
-- **Ports**: Interfaces defining contracts (e.g., `IPostRepository`)
-  - Primary ports: For driving adapters (input)
-  - Secondary ports: For driven adapters (output)
-- **Use Cases**: Business operations
-  - Depend on port interfaces, NOT implementations
-  - Framework-agnostic, testable without UI
-- **Errors**: Domain-specific error classes
-
-#### SECONDARY ADAPTERS (Driven)
-**Purpose**: Provide supporting services to the application
-
-**src/features/[domain]/data/** - Data access adapters
-- **Models**: DTOs with transformation methods (namespace pattern)
-  - Example: `PostDto` interface + `PostDto.toDomain()` method
-  - Combines data structure and transformation logic in one file
-- **Repositories**: Concrete implementations of port interfaces
-  - Each repository is a complete adapter implementation
-  - Example: `FileSystemPostRepository implements IPostRepository`
-  - Multiple adapters can coexist: `ApiPostRepository`, `CachePostRepository`
-  - No need for separate "sources" layer - the repository IS the adapter
-
-#### SHARED UTILITIES
-**src/shared/** - Cross-cutting concerns
-- Services (markdown rendering, analytics, etc.)
-- Utility functions (date formatting, string manipulation, etc.)
-- Constants and configuration
-- Framework-agnostic
-
-## Key Design Patterns
-
-### 1. Ports & Adapters (Hexagonal Architecture)
-
-**Port Interface (Contract)**:
+**Before:**
 ```typescript
-// src/features/blog/core/ports/post-repository.port.ts
-export interface IPostRepository {
-  getPosts(): Promise<Post[]>
-  getPostBySlug(slug: string): Promise<Post | null>
-}
-```
-
-**DTO with Transformation (Data Layer)**:
-```typescript
-// src/features/blog/data/models/post.model.ts
-export interface PostDto {
-  slug: string
-  frontmatter: { title: string; date: string; /* ... */ }
-  content: string
-}
-
-// ES2015 module functions (not namespace)
-export function postDtoToDomain(dto: PostDto): Post {
-  return {
-    slug: dto.slug,
-    title: dto.frontmatter.title,
-    date: new Date(dto.frontmatter.date), // Transform
-    // ...
-  }
-}
-```
-
-**Secondary Adapter (Implementation)**:
-```typescript
-// src/features/blog/data/repositories/post.filesystem.repository.ts
-import { type PostDto, postDtoToDomain } from '@/features/blog/data/models/post.model'
-
-export class FileSystemPostRepository implements IPostRepository {
-  async getPosts(): Promise<Post[]> {
-    const fs = await import('fs') // Dynamic import for server-only code
-    // ... read from filesystem, create dto
-    return postDtoToDomain(dto) // Transform to domain
-  }
-}
-```
-
-**Repository Provider**:
-```typescript
-// src/features/blog/data/repositories/post.repository.ts
-import type { IPostRepository } from '@/features/blog/core/ports/post-repository.port'
-import { FileSystemPostRepository } from './post.filesystem.repository'
-
-// Central point to switch implementations
-export const postRepository: IPostRepository = new FileSystemPostRepository()
-```
-
-**Use Case (Core Logic with Dependency Injection)**:
-```typescript
-// src/features/blog/core/use-cases/get-posts.use-case.ts
-export async function getPostsUseCase(
-  repository: IPostRepository = postRepository // Default for convenience
-): Promise<Post[]> {
-  const posts = await repository.getPosts()
-
-  // Business logic: Filter drafts in production
+// ❌ Business logic scattered in use-cases
+export async function getPostsUseCase(repo: IPostRepository): Promise<Post[]> {
+  const posts = await repo.getPosts()
   if (process.env.NODE_ENV === 'production') {
     return posts.filter(post => !post.draft)
   }
-
   return posts
 }
 ```
 
-**Primary Adapter (Direct Use-Case Call or Generic Hook Wrapper)**:
+**After:**
 ```typescript
-// Option 1: Server Component (Direct call)
-// app/(with-nav)/blog/page.tsx
-export default async function BlogPage() {
-  const posts = await getPostsUseCase()
-  return <PostList posts={posts} />
+// ✅ Business logic in reusable policy
+// core/policies/post-visibility.policy.ts
+export class PostVisibilityPolicy {
+  static shouldShowInPublicList(post: Post, env: string): boolean {
+    return env === 'production' ? !post.draft : true
+  }
 }
 
-// Option 2: Client Component (Generic hook wrapper)
-// app/some-client-component.tsx
-'use client'
-import { useQueryWrapper } from '@/shared/hooks'
-import { getPostsUseCase } from '@/features/blog/core/use-cases/get-posts.use-case'
-
-export function SomeClientComponent() {
-  const { data: posts } = useQueryWrapper(
-    ['posts'],
-    () => getPostsUseCase()
-  )
-  return <PostList posts={posts} />
+// core/use-cases/get-posts.use-case.ts
+export async function getPostsUseCase(
+  repo: IPostRepository,
+  env: string = process.env.NODE_ENV
+): Promise<Post[]> {
+  const posts = await repo.getPosts()
+  return posts.filter(post => PostVisibilityPolicy.shouldShowInPublicList(post, env))
 }
 ```
 
-**Benefits**:
-- ✅ Use cases depend on interfaces, not implementations
-- ✅ Easy to swap adapters (filesystem → API → cache) via provider
-- ✅ Simple to test with mock implementations
-- ✅ Business logic isolated from infrastructure
-- ✅ Dependency injection allows testing with mocks
-- ✅ No feature-specific hooks needed - use generic wrappers or direct calls
-- ✅ Repository provider acts as single source of truth for implementation
+**Benefits:**
+- ✅ Reusable across multiple use-cases
+- ✅ Testable in isolation
+- ✅ Clear naming communicates intent
+- ✅ Domain experts can review
+- ✅ Very stable (TIER 3)
 
-### 2. Dynamic Imports in Adapters
+---
+
+### 2. Feature Barrel Exports
+
+Each feature exposes a public API via `index.ts`:
 
 ```typescript
-// FileSystemPostRepository - handles filesystem directly
-export class FileSystemPostRepository implements IPostRepository {
-  async getPosts(): Promise<Post[]> {
-    // Dynamic import - prevents bundling server-only code in client
-    const fs = await import('fs')
-    const path = await import('path')
+// src/features/blog/index.ts
 
-    // Adapter implementation directly accesses filesystem
-    const files = fs.readdirSync(postsDirectory)
-    // ... rest of implementation
-  }
+// Re-export core (TIER 3)
+export type { Post } from './core/entities/post.entity'
+export { PostVisibilityPolicy } from './core/policies/post-visibility.policy'
+export { getPostsUseCase, getPostBySlugUseCase } from './core/use-cases'
+
+// Re-export infrastructure (TIER 2 - for testing)
+export { postRepository } from './infrastructure/repositories/post.repository'
+export type { IPostRepository } from './core/ports/post-repository.port'
+
+// Convenience API (pre-wired)
+import { postRepository } from './infrastructure/repositories/post.repository'
+import { getPostsUseCase } from './core/use-cases/get-posts.use-case'
+
+export const blog = {
+  getPosts: (env?: string) => getPostsUseCase(postRepository, env),
+  // ... other methods
 }
 ```
 
-### 3. Repository Provider Pattern
+**Usage:**
+```typescript
+// Simple - use pre-wired API
+import { blog } from '@/features/blog'
+const posts = await blog.getPosts()
+
+// Advanced - import individual pieces
+import { getPostsUseCase, postRepository } from '@/features/blog'
+const posts = await getPostsUseCase(postRepository)
+
+// Testing - inject mocks
+import { getPostsUseCase, type IPostRepository } from '@/features/blog'
+const mockRepo: IPostRepository = { ... }
+const posts = await getPostsUseCase(mockRepo)
+```
+
+---
+
+### 3. Generic React Query Wrappers
+
+Instead of feature-specific hooks everywhere, use generic wrappers:
 
 ```typescript
-// post.filesystem.repository.ts - FileSystem implementation
+// app/_adapters/hooks/use-query-wrapper.ts
+export function useQueryWrapper<TData>(
+  queryKey: QueryKey,
+  queryFn: () => Promise<TData>,
+  options?: UseQueryOptions<TData>
+) {
+  return useQuery({ queryKey, queryFn, ...options })
+}
+
+// Usage in components
+import { useQueryWrapper } from '@/app/_adapters/hooks'
+import { blog } from '@/features/blog'
+
+function BlogList() {
+  const { data: posts } = useQueryWrapper(['posts'], blog.getPosts)
+  return <div>{posts?.map(...)}</div>
+}
+```
+
+**Optional:** Create feature-specific hooks if needed:
+```typescript
+// app/_adapters/hooks/use-posts.ts
+export function usePosts() {
+  return useQueryWrapper(['posts'], blog.getPosts)
+}
+```
+
+---
+
+### 4. Port Interfaces & Dependency Injection
+
+Use-cases depend on interfaces, not implementations:
+
+```typescript
+// core/ports/post-repository.port.ts (TIER 3)
+export interface IPostRepository {
+  getPosts(): Promise<Post[]>
+  getPostBySlug(slug: string): Promise<Post | null>
+}
+
+// core/use-cases/get-posts.use-case.ts (TIER 3)
+export async function getPostsUseCase(
+  repository: IPostRepository = postRepository  // Default for convenience
+): Promise<Post[]> {
+  return repository.getPosts()
+}
+
+// infrastructure/repositories/post.filesystem.repository.ts (TIER 2)
 export class FileSystemPostRepository implements IPostRepository {
-  async getPosts(): Promise<Post[]> {
-    const fs = await import('fs')
-    // Read from local filesystem
-  }
+  async getPosts(): Promise<Post[]> { /* ... */ }
 }
 
-// post.api.repository.ts - API implementation (future)
-export class ApiPostRepository implements IPostRepository {
-  async getPosts(): Promise<Post[]> {
-    const response = await fetch('/api/posts')
-    // Fetch from REST API
-  }
-}
+// infrastructure/repositories/post.repository.ts (TIER 2 - Provider)
+export const postRepository: IPostRepository = new FileSystemPostRepository()
+```
 
-// post.cache.repository.ts - Cache implementation (future)
-export class CachePostRepository implements IPostRepository {
-  constructor(
-    private primaryAdapter: IPostRepository,
-    private cache: Cache
-  ) {}
-
-  async getPosts(): Promise<Post[]> {
-    // Check cache, fallback to primary adapter
-  }
-}
-
-// post.repository.ts - Provider (single source of truth)
-import { FileSystemPostRepository } from './post.filesystem.repository'
-
-// Switch implementations here without changing use-cases
+**Switch implementations easily:**
+```typescript
+// Change this one line to swap all implementations
 export const postRepository: IPostRepository = process.env.USE_API
   ? new ApiPostRepository()
   : new FileSystemPostRepository()
 ```
 
-### 4. Dependency Injection in Use Cases
+---
+
+### 5. Dynamic Imports for Server-Only Code
+
+Prevent server code from bundling in client:
 
 ```typescript
-// Use cases accept repository through parameter (dependency injection)
-export async function getPostsUseCase(
-  repository: IPostRepository = postRepository // Default for convenience
-): Promise<Post[]> {
-  const posts = await repository.getPosts()
+export class FileSystemPostRepository implements IPostRepository {
+  async getPosts(): Promise<Post[]> {
+    // Dynamic import - prevents bundling in client
+    const fs = await import('fs')
+    const path = await import('path')
 
-  // Business logic here
-  if (process.env.NODE_ENV === 'production') {
-    return posts.filter(post => !post.draft)
+    const files = fs.readdirSync(postsDirectory)
+    // ... implementation
   }
-
-  return posts
 }
-
-// Testing becomes trivial
-const mockRepository: IPostRepository = {
-  getPosts: async () => [/* mock data */],
-  getPostBySlug: async () => null,
-  createPost: async () => ({ slug: 'test', filename: 'test.md', path: '/test.md' })
-}
-await getPostsUseCase(mockRepository)
 ```
 
-### 5. Generic React Query Wrappers
+---
 
-Instead of creating feature-specific hooks, use generic wrappers:
+## Dependency Rules
+
+### ✅ Allowed Dependencies
 
 ```typescript
-// src/shared/hooks/use-query-wrapper.ts
-export function useQueryWrapper<TData = unknown, TError = Error>(
-  queryKey: QueryKey,
-  queryFn: () => Promise<TData>,
-  options?: UseQueryOptions<TData, TError>
-) {
-  return useTanstackQuery<TData, TError>({
-    queryKey,
-    queryFn,
-    ...options,
-  })
-}
+// ✅ TIER 1 (Volatile) depends on TIER 3 (Stable)
+// app/blog/page.tsx
+import { blog } from '@/features/blog'
 
-// src/shared/hooks/use-mutation-wrapper.ts
-export function useMutationWrapper<TData = unknown, TError = Error, TVariables = void>(
-  mutationFn: (variables: TVariables) => Promise<TData>,
-  options?: UseMutationOptions<TData, TError, TVariables>
-) {
-  return useTanstackMutation<TData, TError, TVariables>({
-    mutationFn,
-    ...options,
-  })
-}
+// ✅ TIER 2 (Moderate) depends on TIER 3 (Stable)
+// infrastructure/repositories/post.filesystem.repository.ts
+import type { IPostRepository } from '@/features/blog/core/ports'
 
-// Usage in components
-const { data: posts } = useQueryWrapper(['posts'], () => getPostsUseCase())
-const savePost = useMutationWrapper(savePostUseCase, {
-  onSuccess: () => { /* ... */ }
-})
+// ✅ TIER 3 (Stable) depends on TIER 3 (Stable)
+// core/use-cases/get-posts.use-case.ts
+import { PostVisibilityPolicy } from '../policies/post-visibility.policy'
 ```
 
-**Benefits**:
-- ✅ No need to create hooks for every use-case
-- ✅ Clear separation: use-cases are business logic, hooks are UI adapters
-- ✅ Less boilerplate code
-- ✅ Use-cases can be called directly in Server Components
-
-### 6. Next.js Routing Exclusion
-
-Files/folders starting with `_` are excluded from routing:
-- `app/_lib/` - Not a route, safe to use for code organization
-- `app/blog/_components/` - Not a route, components only
-
-## Import Patterns
-
-### Hexagonal Architecture Rules
+### ❌ Forbidden Dependencies
 
 ```typescript
-// ✅ UI/API ROUTES import use-cases directly or via generic hooks
-import { getPostsUseCase } from '@/features/blog/core/use-cases/get-posts.use-case'
-import { useQueryWrapper, useMutationWrapper } from '@/shared/hooks'
+// ❌ TIER 3 (Stable) depends on TIER 1 (Volatile)
+// core/use-cases/get-posts.use-case.ts
+import { useQuery } from '@tanstack/react-query' // NEVER!
 
-// ✅ CORE imports port interfaces (contracts), NOT implementations
-import type { IPostRepository } from '@/features/blog/core/ports/post-repository.port'
+// ❌ TIER 3 (Stable) depends on TIER 2 (Moderate)
+// core/use-cases/get-posts.use-case.ts
+import { FileSystemPostRepository } from '../../infrastructure/repositories' // NEVER!
 
-// ✅ Use cases import from provider (single source of truth)
-import { postRepository } from '@/features/blog/data/repositories/post.repository'
-
-// ✅ Use cases accept dependencies via parameters (for testing)
-export async function getPostsUseCase(
-  repository: IPostRepository = postRepository
-): Promise<Post[]>
-
-// ✅ REPOSITORY PROVIDER imports specific implementation
-import { FileSystemPostRepository } from './post.filesystem.repository'
-export const postRepository: IPostRepository = new FileSystemPostRepository()
-
-// ✅ SECONDARY ADAPTERS import and implement ports
-import type { IPostRepository } from '@/features/blog/core/ports/post-repository.port'
-export class FileSystemPostRepository implements IPostRepository { /* ... */ }
-
-// ✅ Pages import UI components and generic hooks
-import { Button } from '@/app/_lib/components/ui/button'
-import { useQueryWrapper } from '@/shared/hooks'
-
-// ✅ Anyone can import from shared utilities
-import { cn } from '@/shared/utils/cn'
-import { markdownService } from '@/shared/services/markdown.service'
-
-// ❌ NEVER: Core imports concrete adapter classes
-// import { FileSystemPostRepository } from '@/features/blog/data/repositories/post.filesystem.repository'
-
-// ❌ NEVER: Use cases import from UI layer
-// import { useQueryWrapper } from '@/shared/hooks'
+// ❌ TIER 2 (Moderate) depends on TIER 1 (Volatile)
+// infrastructure/repositories/post.filesystem.repository.ts
+import { Button } from '@/app/_components/ui/button' // NEVER!
 ```
 
-## Path Aliases (tsconfig.json)
+---
+
+## Path Aliases
 
 ```json
 {
   "paths": {
     "@/*": ["./*"],
     "@/features/*": ["./src/features/*"],
-    "@/shared/*": ["./src/shared/*"],
-    "@/infrastructure/*": ["./src/infrastructure/*"],
     "@/app/*": ["./app/*"]
   }
 }
 ```
 
-## Benefits
-
-### Hexagonal Architecture Advantages
-
-✅ **Technology independence** - Core business logic has no framework dependencies
-✅ **Testability** - Business logic easily tested with mock adapters
-✅ **Flexibility** - Swap adapters without touching business logic
-  - Filesystem → API → Cache → Memory
-  - REST → GraphQL → gRPC
-  - React Query → SWR → Zustand
-✅ **Clear boundaries** - Ports define explicit contracts between layers
-✅ **Maintainability** - Changes isolated to specific adapters
-✅ **Scalability** - Add new adapters without modifying core
-✅ **Type safety** - Interfaces enforce contracts at compile time
-✅ **Developer experience** - Clear structure, predictable patterns
-
-### Next.js-Specific Optimizations
-
-✅ **Bundle optimization** - Dynamic imports prevent server code in client bundles
-✅ **Route organization** - `_` prefix excludes directories from routing
-✅ **Feature isolation** - Domain logic separated from framework concerns
+---
 
 ## Adding a New Feature
 
-Following hexagonal architecture principles:
+### Step 1: Define the Core (TIER 3 - Stable)
 
-### 1. Define the Core (Inside the Hexagon)
 ```
 src/features/[feature-name]/core/
 ├── entities/           # Domain models (pure TypeScript)
-├── ports/              # Port interfaces (contracts)
-│   └── [name]-repository.port.ts
+├── policies/           # Business rules (NEW!)
+├── ports/              # Contracts/interfaces
 ├── use-cases/          # Business operations
 └── errors/             # Domain errors
 ```
 
-### 2. Implement Secondary Adapters (Driven)
+**Example:**
+```typescript
+// entities/comment.entity.ts
+export interface Comment {
+  id: string
+  author: string
+  content: string
+  createdAt: Date
+}
+
+// policies/comment-moderation.policy.ts
+export class CommentModerationPolicy {
+  static requiresApproval(comment: Comment): boolean {
+    return comment.content.length > 1000 // Example rule
+  }
+}
+
+// ports/comment-repository.port.ts
+export interface ICommentRepository {
+  getComments(postId: string): Promise<Comment[]>
+  addComment(comment: Comment): Promise<void>
+}
+
+// use-cases/get-comments.use-case.ts
+export async function getCommentsUseCase(
+  postId: string,
+  repository: ICommentRepository
+): Promise<Comment[]> {
+  return repository.getComments(postId)
+}
 ```
-src/features/[feature-name]/data/
-├── models/             # DTOs with transformation methods
-│   └── [name].model.ts (interface + export functions for transformation)
-└── repositories/       # Adapter implementations
-    ├── [name].repository.ts            # Provider (exports repository instance)
-    ├── [name].filesystem.repository.ts # FileSystem implementation
-    ├── [name].api.repository.ts        # API implementation (future)
-    └── [name].cache.repository.ts      # Cache implementation (future)
+
+### Step 2: Implement Infrastructure (TIER 2 - Moderate)
+
+```
+src/features/[feature-name]/infrastructure/
+├── repositories/       # Adapter implementations
+│   ├── [name].repository.ts          # Provider
+│   └── [name].api.repository.ts      # Implementation
+└── dto/                # Data transformations
+    └── [name].dto.ts
 ```
 
-### 3. Implement Primary Adapters (Driving)
+**Example:**
+```typescript
+// dto/comment.dto.ts
+export interface CommentDto {
+  id: string
+  author: string
+  content: string
+  created_at: string  // Note: snake_case from API
+}
+
+export function commentDtoToDomain(dto: CommentDto): Comment {
+  return {
+    id: dto.id,
+    author: dto.author,
+    content: dto.content,
+    createdAt: new Date(dto.created_at), // Transform
+  }
+}
+
+// repositories/comment.api.repository.ts
+export class ApiCommentRepository implements ICommentRepository {
+  async getComments(postId: string): Promise<Comment[]> {
+    const response = await fetch(`/api/posts/${postId}/comments`)
+    const dtos: CommentDto[] = await response.json()
+    return dtos.map(commentDtoToDomain)
+  }
+}
+
+// repositories/comment.repository.ts (Provider)
+export const commentRepository: ICommentRepository = new ApiCommentRepository()
 ```
-app/[feature-name]/
-├── page.tsx            # Next.js pages (call use-cases directly or via generic hooks)
-└── _components/        # UI components
 
-Note: No feature-specific hooks needed - use generic wrappers from shared/hooks
+### Step 3: Create Public API
+
+```typescript
+// src/features/[feature-name]/index.ts
+export type { Comment } from './core/entities/comment.entity'
+export { CommentModerationPolicy } from './core/policies/comment-moderation.policy'
+export { getCommentsUseCase } from './core/use-cases/get-comments.use-case'
+export { commentRepository } from './infrastructure/repositories/comment.repository'
+
+import { commentRepository } from './infrastructure/repositories/comment.repository'
+import { getCommentsUseCase } from './core/use-cases/get-comments.use-case'
+
+export const comments = {
+  getComments: (postId: string) => getCommentsUseCase(postId, commentRepository),
+}
 ```
 
-### Example 1: Adding a new "Comments" feature
+### Step 4: Use in UI (TIER 1 - Volatile)
 
-1. **Core** (`src/features/comments/core/`):
-   ```typescript
-   // ports/comment-repository.port.ts
-   export interface ICommentRepository {
-     getComments(postSlug: string): Promise<Comment[]>
-     addComment(comment: Comment): Promise<void>
-   }
+```typescript
+// Server Component
+// app/(routes)/posts/[id]/page.tsx
+import { comments } from '@/features/comments'
 
-   // use-cases/get-comments.use-case.ts
-   export async function getCommentsUseCase(
-     postSlug: string,
-     repository: ICommentRepository = commentRepository
-   ): Promise<Comment[]> {
-     return repository.getComments(postSlug)
-   }
-   ```
+export default async function PostPage({ params }: { params: { id: string } }) {
+  const commentList = await comments.getComments(params.id)
+  return <CommentList comments={commentList} />
+}
 
-2. **DTO with Transformation** (`src/features/comments/data/models/`):
-   ```typescript
-   // models/comment.model.ts
-   export interface CommentDto {
-     id: string
-     author: string
-     content: string
-     created_at: string
-   }
+// Client Component
+// app/(routes)/posts/[id]/comments-section.tsx
+'use client'
+import { useQueryWrapper } from '@/app/_adapters/hooks'
+import { comments } from '@/features/comments'
 
-   export function commentDtoToDomain(dto: CommentDto): Comment {
-     return {
-       id: dto.id,
-       author: dto.author,
-       content: dto.content,
-       createdAt: new Date(dto.created_at), // Transform
-     }
-   }
-   ```
+export function CommentsSection({ postId }: { postId: string }) {
+  const { data } = useQueryWrapper(['comments', postId], () =>
+    comments.getComments(postId)
+  )
+  return <CommentList comments={data} />
+}
+```
 
-3. **Secondary Adapter** (`src/features/comments/data/`):
-   ```typescript
-   // repositories/comment.api.repository.ts
-   import { commentDtoToDomain } from '../models/comment.model'
-
-   export class ApiCommentRepository implements ICommentRepository {
-     async getComments(postSlug: string): Promise<Comment[]> {
-       const response = await fetch(`/api/comments/${postSlug}`)
-       const dtos: CommentDto[] = await response.json()
-       return dtos.map(commentDtoToDomain)
-     }
-   }
-
-   // repositories/comment.repository.ts (Provider)
-   import { ApiCommentRepository } from './comment.api.repository'
-   export const commentRepository: ICommentRepository = new ApiCommentRepository()
-   ```
-
-4. **Primary Adapter** (in UI components):
-   ```typescript
-   // app/posts/[slug]/page.tsx (Server Component)
-   export default async function PostPage({ params }: { params: { slug: string } }) {
-     const comments = await getCommentsUseCase(params.slug)
-     return <CommentList comments={comments} />
-   }
-
-   // Or in Client Component
-   'use client'
-   import { useQueryWrapper } from '@/shared/hooks'
-
-   export function CommentSection({ postSlug }: { postSlug: string }) {
-     const { data: comments } = useQueryWrapper(
-       ['comments', postSlug],
-       () => getCommentsUseCase(postSlug)
-     )
-     return <CommentList comments={comments} />
-   }
-   ```
-
-### Example 2: Editor Feature (Framework-Agnostic Logic Pattern)
-
-The editor demonstrates separating framework-agnostic logic from React:
-
-1. **Framework-Agnostic Form Controller** (`src/features/editor/core/form/`):
-   ```typescript
-   // editor-form.controller.ts
-   export class EditorFormController {
-     updateField(state: EditorFormData, field: string, value: any): EditorFormData {
-       return { ...state, [field]: value }
-     }
-
-     validate(state: EditorFormData): { isValid: boolean; errors: {} } {
-       // Pure validation logic
-     }
-
-     canSave(state: EditorFormData): boolean {
-       return this.validate(state).isValid
-     }
-   }
-
-   export const editorFormController = new EditorFormController()
-   ```
-
-2. **React Adapter Hook** (`src/features/editor/hooks/`):
-   ```typescript
-   // use-editor-state.ts
-   import { editorFormController } from '@/features/editor/core/form/editor-form.controller'
-
-   export function useEditorState() {
-     const [formData, setFormData] = useState(editorFormController.reset())
-
-     const updateField = useCallback((field, value) => {
-       setFormData(prev => editorFormController.updateField(prev, field, value))
-     }, [])
-
-     const canSave = editorFormController.canSave(formData)
-
-     return { formData, updateField, canSave }
-   }
-   ```
-
-3. **UI Component** (`app/editor/page.tsx`):
-   ```typescript
-   export default function EditorPage() {
-     const { formData, updateField, canSave } = useEditorState()
-
-     return (
-       <input
-         value={formData.title}
-         onChange={(e) => updateField('title', e.target.value)}
-       />
-       <button disabled={!canSave}>Save</button>
-     )
-   }
-   ```
-
-**Benefits of this pattern:**
-- ✅ Form logic testable without React
-- ✅ Can migrate to Vue/Svelte by rewriting only the adapter hook
-- ✅ Business rules in controller, React-specific code in hook
-- ✅ Clear separation between "what changes" (UI) and "what's stable" (logic)
-
-## Migration Notes
-
-**From:** Flat structure with `src/core/`, `src/data/`, `src/presentation/`
-**To:** Feature-based with `src/features/[domain]/`
-
-**Key changes:**
-- Feature-specific hooks removed → Use generic wrappers from `src/shared/hooks/`
-- UI components moved from `src/presentation/components/` → `app/_lib/components/ui/`
-- Domain code organized by feature rather than by layer
-- Repository provider pattern: `[name].repository.ts` exports instance, implementations in separate files
-- Use-cases called directly in Server Components or via generic hooks in Client Components
-
-**Build status:** ✅ 22 pages successfully generated, no routing conflicts
+---
 
 ## Testing Strategy
 
-Hexagonal architecture makes testing straightforward:
-
-### Unit Testing Use Cases
+### Unit Testing (TIER 3 - Business Logic)
 
 ```typescript
-// Mock the port interface
+import { getPostsUseCase } from '@/features/blog'
+import type { IPostRepository } from '@/features/blog'
+
 const mockRepository: IPostRepository = {
   getPosts: jest.fn().mockResolvedValue([
-    { slug: 'test', title: 'Test Post', /* ... */ }
+    { title: 'Test', draft: false, /* ... */ }
   ]),
-  getPostBySlug: jest.fn(),
-  createPost: jest.fn()
+  // ... other methods
 }
 
-// Test business logic in isolation
 test('filters drafts in production', async () => {
-  process.env.NODE_ENV = 'production'
-  const posts = await getPostsUseCase(mockRepository)
+  const posts = await getPostsUseCase(mockRepository, 'production')
   expect(posts.every(p => !p.draft)).toBe(true)
 })
 ```
 
-### Integration Testing Adapters
+### Integration Testing (TIER 2 - Adapters)
 
 ```typescript
-// Test real adapter implementation
-test('FileSystemPostRepository reads posts from disk', async () => {
+test('FileSystemPostRepository reads from disk', async () => {
   const repository = new FileSystemPostRepository()
   const posts = await repository.getPosts()
   expect(posts).toHaveLength(expectedCount)
 })
 ```
 
-### E2E Testing
+### E2E Testing (TIER 1 - UI)
 
 ```typescript
-// Test through primary adapters (UI, API)
 test('user can view blog posts', async () => {
   render(<BlogPage />)
   await waitFor(() => {
@@ -731,10 +622,96 @@ test('user can view blog posts', async () => {
 })
 ```
 
-## References
+---
 
-- [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture) - Original hexagonal architecture paper
-- [CLEAN_ARCHITECTURE.md](./CLEAN_ARCHITECTURE.md) - Original clean architecture documentation
+## Benefits
+
+### 🎯 Clear Boundaries
+Know exactly what to throw away during migrations:
+- **React → Vue:** Dump TIER 1, keep TIER 2 & 3
+- **Filesystem → CMS:** Replace TIER 2, keep TIER 1 & 3
+- **New feature:** Add to TIER 3, wire in TIER 2, expose in TIER 1
+
+### 🧪 Testability
+- **TIER 3:** Unit tests (business logic in isolation)
+- **TIER 2:** Integration tests (real adapters)
+- **TIER 1:** E2E tests (user flows)
+
+### 🚀 Technology Independence
+- Business logic (TIER 3) has zero framework dependencies
+- Can migrate frameworks without rewriting business rules
+- Repository pattern allows swapping data sources
+
+### 📊 Technical Debt Visibility
+- Changes in TIER 3 = high cost (business logic)
+- Changes in TIER 1 = low cost (UI tweaks)
+- Changes in TIER 2 = medium cost (infrastructure)
+
+### 🔄 Migration Confidence
+- TIER 1 changes don't affect business logic
+- TIER 2 changes don't affect UI or business rules
+- Each tier can evolve independently
+
+---
+
+## Real-World Scenarios
+
+### Scenario 1: Migrate React to Vue
+
+**What changes:**
+- 🔴 TIER 1: Complete rewrite (40% of codebase)
+
+**What stays:**
+- 🟢 TIER 3: Zero changes (business logic)
+- 🟡 TIER 2: Zero changes (repositories)
+
+### Scenario 2: Switch Filesystem to Headless CMS
+
+**What changes:**
+- 🟡 TIER 2: Replace one adapter (5% of codebase)
+
+**What stays:**
+- 🟢 TIER 3: Zero changes (use-cases)
+- 🔴 TIER 1: Zero changes (UI)
+
+### Scenario 3: Add New Business Feature
+
+**What changes:**
+- 🟢 TIER 3: Add policy + use-case
+- 🟡 TIER 2: Add repository method
+- 🔴 TIER 1: Add UI component
+
+---
+
+## Migration Notes
+
+**From:** Traditional hexagonal architecture
+
+**To:** Volatility-based hexagonal architecture
+
+**Key changes:**
+1. ✅ Added **business policies** (`core/policies/`)
+2. ✅ Added **feature barrel exports** (`features/[domain]/index.ts`)
+3. ✅ Simplified **adapters folder** (no `_react/` vs `_nextjs/` separation)
+4. ✅ Explicit **volatility tiers** in documentation
+5. ✅ Pre-wired **convenience API** in barrel exports
+
+---
+
+## Quick Reference
+
+| Tier | Location | Change Frequency | Dump When |
+|------|----------|------------------|-----------|
+| 🔴 **TIER 1** | `app/` | Weekly/Monthly | Framework migration |
+| 🟡 **TIER 2** | `src/features/*/infrastructure/` | Quarterly | Infrastructure change |
+| 🟢 **TIER 3** | `src/features/*/core/` | Yearly | Never (business logic) |
+
+---
+
+## Additional Resources
+
+- [VOLATILITY-TIERS.md](./VOLATILITY-TIERS.md) - Detailed volatility model explanation
+- [Hexagonal Architecture (Alistair Cockburn)](https://alistair.cockburn.us/hexagonal-architecture)
+- [Screaming Architecture (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2011/09/30/Screaming-Architecture.html)
+- [Volatility-Based Decomposition](https://dmitripavlutin.com/frontend-architecture-stable-and-volatile-dependencies/)
 - [Next.js App Router](https://nextjs.org/docs/app)
-- [Feature-Sliced Design](https://feature-sliced.design/)
-- [Ports and Adapters Pattern](https://en.wikipedia.org/wiki/Hexagonal_architecture_(software))
