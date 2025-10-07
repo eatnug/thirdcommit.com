@@ -4,6 +4,8 @@ import { createProjectsApi, getProjectRepository } from '@/domain/projects'
 import { getValidTab } from '@/app/_components/tabs/types'
 import { TabsUI } from '@/app/_components/tabs/tabs-ui'
 
+export const dynamic = 'force-dynamic'
+
 interface HomePageProps {
   searchParams: Promise<{ tab?: string }>
 }

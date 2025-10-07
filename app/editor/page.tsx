@@ -10,6 +10,7 @@ import { PreviewPanel } from './_components/preview-panel'
 import { DraftsDropdown } from './_components/drafts-dropdown'
 import { EditorActions } from './_components/editor-actions'
 
+
 function EditorContent() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id') || undefined
@@ -66,13 +67,10 @@ function EditorContent() {
         {!vm.showPreview ? (
           <MarkdownEditor
             content={vm.formData.content}
-            contentLineCount={vm.contentLineCount}
             onChange={(content) => vm.updateField('content', content)}
           />
         ) : (
           <PreviewPanel
-            title={vm.formData.title}
-            description={vm.formData.description}
             content={vm.formData.content}
             previewHtml={vm.previewHtml}
             previewLoading={vm.previewLoading}
@@ -97,6 +95,22 @@ function EditorContent() {
 }
 
 export default function EditorPage() {
+  // During static export, return a simple message
+  if (process.env.NEXT_PUBLIC_STATIC_EXPORT === 'true') {
+    return (
+      <div className="container mx-auto max-w-2xl p-8">
+        <Card className="p-6">
+          <h1 className="text-2xl font-bold text-red-600">
+            Editor Not Available
+          </h1>
+          <p className="mt-2 text-gray-600">
+            The editor is only available in development mode.
+          </p>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <EditorContent />

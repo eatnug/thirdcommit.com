@@ -2,9 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 
-export function Header() {
+function HeaderContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isDevelopment, setIsDevelopment] = useState(false)
@@ -93,5 +93,26 @@ export function Header() {
         </nav>
       </div>
     </header>
+  )
+}
+
+export function Header() {
+  return (
+    <Suspense fallback={
+      <header className="pt-[60px] pb-[10px] px-4 md:px-[400px]">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex flex-col gap-[10px]">
+            <div className="flex items-center gap-[10px]">
+              <span className="text-[25px] font-normal font-['Gothic_A1'] text-black">Jake Park</span>
+            </div>
+            <p className="text-[15px] font-normal font-['Gothic_A1'] text-black">
+              Software engineer. Love to create something
+            </p>
+          </div>
+        </div>
+      </header>
+    }>
+      <HeaderContent />
+    </Suspense>
   )
 }

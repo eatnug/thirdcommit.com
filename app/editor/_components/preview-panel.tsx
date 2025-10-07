@@ -1,6 +1,4 @@
 interface PreviewPanelProps {
-  title: string
-  description: string
   content: string
   previewHtml: string
   previewLoading: boolean
@@ -8,8 +6,6 @@ interface PreviewPanelProps {
 }
 
 export function PreviewPanel({
-  title,
-  description,
   content,
   previewHtml,
   previewLoading,

@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import type { TabValue } from './types'
 import { getValidTab } from './types'
-import { TabNavigation } from './tab-navigation'
 import { TabPanel } from './tab-panel'
 import { ProjectsList } from '@/app/_components/projects/projects-list'
 import { BlogList } from '@/app/_components/blog/blog-list'
@@ -18,7 +17,6 @@ interface TabsUIProps {
 }
 
 export function TabsUI({ initialTab, posts, projects }: TabsUIProps) {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<TabValue>(initialTab)
 
@@ -27,14 +25,6 @@ export function TabsUI({ initialTab, posts, projects }: TabsUIProps) {
     const tab = getValidTab({ tab: searchParams.get('tab') || undefined })
     setActiveTab(tab)
   }, [searchParams])
-
-  const handleTabChange = (tab: TabValue) => {
-    setActiveTab(tab)
-
-    // Update URL without scroll
-    const newUrl = tab === 'about' ? '/' : `/?tab=${tab}`
-    router.replace(newUrl, { scroll: false })
-  }
 
   return (
     <>

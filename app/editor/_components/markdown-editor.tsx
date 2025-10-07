@@ -1,12 +1,10 @@
 interface MarkdownEditorProps {
   content: string
-  contentLineCount: number
   onChange: (content: string) => void
 }
 
 export function MarkdownEditor({
   content,
-  contentLineCount,
   onChange,
 }: MarkdownEditorProps) {
   return (
