@@ -4,7 +4,7 @@ import type { Post } from '@/domain/blog/entities/post.entity'
 
 export function PostCard({ post }: { post: Post }) {
   return (
-    <Link href={`/posts?id=${encodeURIComponent(post.slug)}`}>
+    <Link href={`/posts/${encodeURIComponent(post.slug)}`}>
       <div className="border-b border-[#bbbbbb] py-[20px] flex flex-col gap-[10px]">
         <h2 className="text-[25px] font-medium text-black">
           {post.title}

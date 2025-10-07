@@ -25,13 +25,16 @@ export class FileSystemPostRepository implements IPostRepository {
 
   /**
    * Generate a URL-friendly slug from a title
+   * Supports Korean characters and other Unicode letters
    */
   private slugify(title: string): string {
     return title
       .toLowerCase()
-      .replace(/[^\w\s-]/g, '') // Remove special chars
+      // Keep Korean, English, numbers, spaces, and hyphens; remove everything else
+      .replace(/[^\u3131-\uD79D\w\s-]/g, '')
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/--+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
       .trim()
   }
 
