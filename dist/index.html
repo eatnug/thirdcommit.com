@@ -5,8 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Jake Park - Software Engineer</title>
     <meta name="description" content="Jake Park's personal blog and portfolio" />
-    <script type="module" crossorigin src="/assets/index-CIzV9c5F.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DYSLFuUI.css">
+    <script>
+      // GitHub Pages SPA redirect restore
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.pathname) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
+    <script type="module" crossorigin src="/assets/index-DanXgTuj.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-De5o6Ire.css">
   </head>
   <body>
     <div id="root"></div>
