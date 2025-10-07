@@ -50,10 +50,35 @@ await Promise.all(
   })
 );
 
-// Empty projects for now
+// Write projects data
+const projects = [
+  {
+    title: "What should I build next?",
+    description: "Send me an idea.",
+    externalLink: "mailto:jake@thirdcommit.com",
+  },
+  {
+    title: "My Feed (WIP)",
+    description:
+      "Fully customizable feed: add any source you follow (YouTube channels, Instagram accounts, blogs) and read everything without distractions.",
+  },
+  {
+    title: "The Terminal X",
+    description:
+      "AI research agent for finance professionals. Retrieves news, analyzes market signals, and answers questions",
+    externalLink: "https://theterminalx.com/",
+  },
+  {
+    title: "DoctorNow",
+    description:
+      "South Korea's leading telemedicine app, enabling 24/7 remote doctor consultations and prescription services.",
+    externalLink: "https://www.doctornow.co.kr/",
+  },
+];
+
 writeFileSync(
   join(PUBLIC_DIR, 'projects.json'),
-  JSON.stringify([], null, 2)
+  JSON.stringify(projects, null, 2)
 );
 
-console.log(`✓ Generated ${publishedPosts.length} posts`);
+console.log(`✓ Generated ${publishedPosts.length} posts and ${projects.length} projects`);
