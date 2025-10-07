@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "export": "mv app/api app/_api && mv app/editor app/_editor && NEXT_PUBLIC_STATIC_EXPORT=true next build && tsx scripts/generate-redirects.ts && touch out/.nojekyll && cp public/CNAME out/CNAME && mv app/_api app/api && mv app/_editor app/editor",
+    "export": "bash -c '[ -d app/api ] && mv app/api app/_api || true; [ -d app/editor ] && mv app/editor app/_editor || true; NEXT_PUBLIC_STATIC_EXPORT=true next build && tsx scripts/generate-redirects.ts && touch out/.nojekyll && cp public/CNAME out/CNAME; [ -d app/_api ] && mv app/_api app/api || true; [ -d app/_editor ] && mv app/_editor app/editor || true'",
     "migrate-posts": "tsx scripts/migrate-posts.ts"
   },
   "dependencies": {
