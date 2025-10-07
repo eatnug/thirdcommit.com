@@ -7,8 +7,10 @@ interface EditorActionsProps {
   canSave: boolean
   message: string
   postStatus?: 'draft' | 'published'
+  description: string
   onSave: () => void
   onPublish?: () => void
+  onDescriptionChange: (value: string) => void
 }
 
 export function EditorActions({
@@ -17,17 +19,26 @@ export function EditorActions({
   canSave,
   message,
   postStatus = 'draft',
+  description,
   onSave,
   onPublish,
+  onDescriptionChange,
 }: EditorActionsProps) {
   return (
-    <div className="mt-4 space-y-4">
-      {/* Actions */}
-      <div className="flex items-center gap-4">
+    <div className="mt-4">
+      <div className="flex items-center gap-2">
+        <input
+          type="text"
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          className="flex-1 rounded-md border border-gray-300 px-3 py-2 bg-gray-100"
+          placeholder="SEO Summary Placeholder"
+          maxLength={160}
+        />
         <Button
           onClick={onSave}
           disabled={isSaving || !canSave}
-          className="px-6"
+          className="px-6 bg-gray-200 text-black hover:bg-gray-300 border-0"
           aria-label="Save blog post"
         >
           {isSaving ? 'Saving...' : 'Save'}
@@ -37,41 +48,23 @@ export function EditorActions({
           <Button
             onClick={onPublish}
             disabled={isPublishing || postStatus === 'published'}
-            variant="outline"
-            className="px-6"
+            className="px-6 bg-gray-200 text-black hover:bg-gray-300 border-0"
             aria-label="Publish post"
           >
-            {isPublishing ? 'Publishing...' : postStatus === 'published' ? 'Already Published' : 'Publish'}
+            {isPublishing ? 'Publishing...' : postStatus === 'published' ? 'Published' : 'Publish'}
           </Button>
-        )}
-
-        {message && (
-          <p
-            className={
-              message.startsWith('✅') ? 'text-green-600' : 'text-red-600'
-            }
-          >
-            {message}
-          </p>
         )}
       </div>
 
-      {/* Help Text */}
-      <Card className="p-4 bg-gray-50">
-        <h3 className="font-medium mb-2">💡 Tips</h3>
-        <ul className="text-sm text-gray-600 space-y-1">
-          <li>
-            • Files are saved to{' '}
-            <code className="bg-gray-200 px-1 rounded">content/posts/</code>
-          </li>
-          <li>
-            • Filename is auto-generated from title (lowercase, kebab-case)
-          </li>
-          <li>• Drafts won&apos;t appear on the public site</li>
-          <li>• Use Markdown syntax for formatting</li>
-          <li>• Keyboard shortcut: Cmd/Ctrl + S to save</li>
-        </ul>
-      </Card>
+      {message && (
+        <p
+          className={`mt-2 ${
+            message.startsWith('✅') ? 'text-green-600' : 'text-red-600'
+          }`}
+        >
+          {message}
+        </p>
+      )}
     </div>
   )
 }

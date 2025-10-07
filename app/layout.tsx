@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Gothic_A1, Inter } from "next/font/google";
 import { QueryProvider } from "@/app/_adapters/_providers";
+import { Header } from "@/app/_components/header";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
-const spaceGrotesk = Space_Grotesk({
+const gothicA1 = Gothic_A1({
   subsets: ["latin"],
-  weight: "700",
-  variable: '--font-space-grotesk'
+  weight: ["400", "500"],
+  variable: '--font-gothic-a1'
 });
 
 export const metadata: Metadata = {
@@ -26,9 +27,14 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.className} ${spaceGrotesk.variable}`}>
+      <body className={`${inter.className} ${gothicA1.variable} bg-white`}>
         <QueryProvider>
-          {children}
+          <div className="min-h-screen flex flex-col">
+            <Header />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
         </QueryProvider>
       </body>
     </html>

@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Card } from '@/app/_components/card'
 import { useEditorViewModel } from './use-editor-view-model'
-import { EditorHeader } from './_components/editor-header'
 import { MetadataForm } from './_components/metadata-form'
 import { MarkdownEditor } from './_components/markdown-editor'
 import { PreviewPanel } from './_components/preview-panel'
@@ -39,15 +38,7 @@ function EditorContent() {
   }
 
   return (
-    <div className="container mx-auto max-w-6xl p-8">
-      <EditorHeader
-        draftsCount={vm.drafts.length}
-        showDrafts={vm.showDrafts}
-        showPreview={vm.showPreview}
-        onToggleDrafts={vm.toggleDrafts}
-        onTogglePreview={vm.setShowPreview}
-      />
-
+    <div className="px-4 md:px-[400px] py-[20px]">
       {/* Drafts Dropdown */}
       <div className="relative mb-4">
         <DraftsDropdown
@@ -64,22 +55,21 @@ function EditorContent() {
 
       <MetadataForm
         title={vm.formData.title}
-        description={vm.formData.description}
-        descriptionCharCount={vm.descriptionCharCount}
+        showPreview={vm.showPreview}
         onFieldChange={vm.updateField}
+        onTogglePreview={vm.setShowPreview}
+        onToggleDrafts={vm.toggleDrafts}
       />
 
-      {/* Content and Preview Row */}
-      <div
-        className={`grid gap-6 flex-1 ${vm.showPreview ? 'grid-cols-2' : 'grid-cols-1'}`}
-      >
-        <MarkdownEditor
-          content={vm.formData.content}
-          contentLineCount={vm.contentLineCount}
-          onChange={(content) => vm.updateField('content', content)}
-        />
-
-        {vm.showPreview && (
+      {/* Content or Preview - Switch between them */}
+      <div className="flex-1 mb-4">
+        {!vm.showPreview ? (
+          <MarkdownEditor
+            content={vm.formData.content}
+            contentLineCount={vm.contentLineCount}
+            onChange={(content) => vm.updateField('content', content)}
+          />
+        ) : (
           <PreviewPanel
             title={vm.formData.title}
             description={vm.formData.description}
@@ -97,8 +87,10 @@ function EditorContent() {
         canSave={vm.canSave}
         message={vm.message}
         postStatus={vm.formData.status}
+        description={vm.formData.description}
         onSave={vm.handleSave}
         onPublish={vm.handlePublish}
+        onDescriptionChange={(value) => vm.updateField('description', value)}
       />
     </div>
   )

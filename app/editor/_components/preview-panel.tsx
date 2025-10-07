@@ -16,31 +16,22 @@ export function PreviewPanel({
   previewError,
 }: PreviewPanelProps) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="block text-sm font-medium text-gray-700">
-          Rendered Preview
-        </label>
+    <div className="relative">
+      <div className="min-h-[500px] overflow-y-auto rounded-lg border-2 border-gray-300 bg-gray-100 p-4">
         {previewLoading && (
-          <span className="text-xs text-gray-500">Rendering...</span>
+          <p className="text-sm text-gray-500">Body Preview</p>
         )}
-      </div>
-
-      <div className="h-[calc(100vh-28rem)] overflow-y-auto rounded-lg border-2 border-gray-300 bg-white p-8">
         {previewError ? (
           <div className="text-red-600 text-sm bg-red-50 p-4 rounded border border-red-200">
             {previewError}
           </div>
         ) : (
           <>
-            {title && (
-              <h1 className="text-4xl font-bold mb-4 text-gray-900">{title}</h1>
-            )}
-            {description && (
-              <p className="text-gray-600 mb-6 text-lg">{description}</p>
+            {!content && (
+              <p className="text-sm text-gray-500">Body Preview</p>
             )}
             <div
-              className="prose prose-lg max-w-none
+              className="prose prose-lg max-w-none text-[18px]
                 prose-headings:text-gray-900 prose-headings:font-bold
                 prose-p:text-gray-700 prose-p:leading-relaxed
                 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline
@@ -54,11 +45,6 @@ export function PreviewPanel({
                 prose-hr:border-gray-300"
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
-            {!content && (
-              <p className="text-gray-400 text-center py-16 italic">
-                Start typing to see preview...
-              </p>
-            )}
           </>
         )}
       </div>

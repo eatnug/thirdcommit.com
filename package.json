@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "export": "NEXT_PUBLIC_STATIC_EXPORT=true next build && touch out/.nojekyll && cp public/CNAME out/CNAME",
+    "export": "NEXT_PUBLIC_STATIC_EXPORT=true next build && tsx scripts/generate-redirects.ts && touch out/.nojekyll && cp public/CNAME out/CNAME",
     "migrate-posts": "tsx scripts/migrate-posts.ts"
   },
   "dependencies": {

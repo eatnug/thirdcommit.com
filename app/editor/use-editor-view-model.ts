@@ -259,14 +259,21 @@ export function useEditorViewModel(initialId?: string) {
     }
 
     try {
-      const blog = await getBlogApi();
-      await blog.deletePost(id);
+      const response = await fetch(`/api/posts/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete post');
+      }
+
       setMessage(`✅ Deleted draft: ${title}`);
 
       // Refresh drafts via API
-      const response = await fetch('/api/drafts');
-      if (response.ok) {
-        const data = await response.json();
+      const draftsResponse = await fetch('/api/drafts');
+      if (draftsResponse.ok) {
+        const data = await draftsResponse.json();
         setDrafts(data.drafts || []);
       }
 
