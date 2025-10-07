@@ -7,7 +7,8 @@
     "dev": "vite",
     "dev:api": "node scripts/dev-api-server.mjs",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\"",
-    "build": "node scripts/build-static-data.mjs && tsc -b && vite build",
+    "build": "node scripts/build-static-data.mjs && tsc -b && vite build && npm run generate:html",
+    "generate:html": "vite preview --port 4173 & sleep 5 && node scripts/generate-static-html.mjs && lsof -ti:4173 | xargs kill 2>/dev/null",
     "deploy": "npm run build && touch dist/.nojekyll && cp public/CNAME dist/CNAME",
     "preview": "vite preview",
     "lint": "eslint ."
@@ -45,6 +46,7 @@
     "eslint": "^9",
     "express": "^4.21.2",
     "marked": "^16.4.0",
+    "puppeteer": "^24.23.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
     "tw-animate-css": "^1.3.8",
