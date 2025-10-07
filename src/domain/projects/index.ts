@@ -28,8 +28,9 @@ export type { IProjectRepository } from './ports/project-repository.port'
 
 // ============================================================================
 // REPOSITORY EXPORTS (IOC Container)
+// Removed - repositories now in adapters layer
+// Import from @/adapters/repositories instead
 // ============================================================================
-export { getProjectRepository } from '@/infrastructure/projects/repositories/project.repository'
 
 // ============================================================================
 // CONVENIENCE API (Server-side only)

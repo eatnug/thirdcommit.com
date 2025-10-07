@@ -44,8 +44,9 @@ export type { IPostRepository } from './ports/post-repository.port'
 
 // ============================================================================
 // REPOSITORY EXPORTS (IOC Container)
+// Removed - repositories now in adapters layer
+// Import from @/adapters/repositories instead
 // ============================================================================
-export { getServerPostRepository, getClientPostRepository } from '@/infrastructure/blog/repositories/post.repository'
 
 // ============================================================================
 // CONVENIENCE API (Server-side only)

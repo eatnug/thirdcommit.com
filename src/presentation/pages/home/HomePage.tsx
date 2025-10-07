@@ -1,0 +1,37 @@
+import { useQuery } from '@tanstack/react-query';
+import { createBlogApi } from '@/domain/blog';
+import { createProjectsApi } from '@/domain/projects';
+import { getPostRepository, getProjectRepository } from '@/adapters/repositories';
+import { TabsUI } from '@/presentation/components/tabs/TabsUI';
+import { Header } from '@/presentation/layouts/Header';
+
+const blogApi = createBlogApi(getPostRepository());
+const projectsApi = createProjectsApi(getProjectRepository());
+
+export function HomePage() {
+  const { data: posts = [], isLoading: postsLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: () => blogApi.getPosts(),
+  });
+
+  const { data: projects = [], isLoading: projectsLoading } = useQuery({
+    queryKey: ['projects'],
+    queryFn: () => projectsApi.getProjects(),
+  });
+
+  if (postsLoading || projectsLoading) {
+    return (
+      <div className="px-4 md:px-[400px] py-[20px]">
+        <Header />
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 md:px-[400px] py-[20px] flex flex-col gap-[20px]">
+      <Header />
+      <TabsUI posts={posts} projects={projects} />
+    </div>
+  );
+}
