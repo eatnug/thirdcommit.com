@@ -1,18 +1,11 @@
 import { Suspense } from 'react'
 import { createBlogApi, getServerPostRepository } from '@/domain/blog'
 import { createProjectsApi, getProjectRepository } from '@/domain/projects'
-import { getValidTab } from '@/app/_components/tabs/types'
 import { TabsUI } from '@/app/_components/tabs/tabs-ui'
 
-export const dynamic = 'force-dynamic'
-
-interface HomePageProps {
-  searchParams: Promise<{ tab?: string }>
-}
-
-export default async function HomePage({ searchParams }: HomePageProps) {
-  const params = await searchParams
-  const initialTab = getValidTab(params)
+export default async function HomePage() {
+  // Default tab for static export
+  const initialTab = 'blog'
 
   // Fetch data in parallel
   const [projects, posts] = await Promise.all([
@@ -29,28 +22,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   )
 }
 
-export async function generateMetadata({ searchParams }: HomePageProps) {
-  const params = await searchParams
-  const tab = getValidTab(params)
-
-  if (tab === 'blog') {
-    return {
-      title: 'Blog - Jake Park',
-      description: 'Articles about software engineering, AI, and vibe-coding experiments.',
-      openGraph: {
-        title: 'Blog - Jake Park',
-        description: 'Articles about software engineering, AI, and vibe-coding experiments.',
-        url: 'https://thirdcommit.com/?tab=blog'
-      }
-    }
-  }
-
+export async function generateMetadata() {
   return {
     title: 'Jake Park - Software Engineer',
-    description: 'Software engineer. Desperately trying to keep up with this big, disruptive wave of innovation.',
+    description: 'Software engineer. Love to create something',
     openGraph: {
       title: 'Jake Park - Software Engineer',
-      description: 'Software engineer. Desperately trying to keep up with this big, disruptive wave of innovation.',
+      description: 'Software engineer. Love to create something',
       url: 'https://thirdcommit.com/'
     }
   }

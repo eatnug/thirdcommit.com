@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-static'
-export const revalidate = false
-
 const isDev = process.env.NODE_ENV === 'development'
+
+export async function generateStaticParams() {
+  // Don't generate any static params for API routes in static export
+  return []
+}
 
 interface PostUpdateData {
   title?: string
