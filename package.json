@@ -4,9 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently \"npm run dev:vite\" \"npm run dev:api\"",
+    "dev:vite": "vite",
     "dev:api": "node scripts/dev-api-server.mjs",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:api\"",
     "build": "node scripts/build-static-data.mjs && tsc -b && vite build && npm run generate:html",
     "generate:html": "vite preview --port 4173 & sleep 5 && node scripts/generate-static-html.mjs && lsof -ti:4173 | xargs kill 2>/dev/null",
     "deploy": "npm run build && touch dist/.nojekyll && cp public/CNAME dist/CNAME",
