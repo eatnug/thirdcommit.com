@@ -11,8 +11,16 @@ async function generateStaticSite() {
 
   console.log(`Starting static generation for ${postsData.length} posts...`);
 
-  // Launch browser
-  const browser = await puppeteer.launch({ headless: 'new' });
+  // Launch browser with CI-friendly options
+  const browser = await puppeteer.launch({
+    headless: 'new',
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu'
+    ]
+  });
   const page = await browser.newPage();
 
   try {
