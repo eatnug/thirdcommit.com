@@ -1,38 +1,19 @@
 import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
+import { StaticPostRepository } from './post.static.repository'
 
 /**
  * IOC Container for Post Repository
  *
- * Provides singleton instances of repository implementations:
- * - clientPostRepository: ApiPostRepository - HTTP API calls (client-side)
- * - serverPostRepository: FileSystemPostRepository - direct file access (server-side)
- *
- * Consumer decides which implementation to use based on their environment.
+ * Returns appropriate repository based on environment:
+ * - DEV: StaticPostRepository with /api proxy
+ * - PROD: StaticPostRepository with static JSON
  */
 
-let clientInstance: IPostRepository | null = null
-let serverInstance: IPostRepository | null = null
+let instance: IPostRepository | null = null
 
-/**
- * Get client-side repository (uses API)
- * Safe to use in browser environment
- */
-export async function getClientPostRepository(): Promise<IPostRepository> {
-  if (!clientInstance) {
-    const { ApiPostRepository } = await import('./post.api.repository')
-    clientInstance = new ApiPostRepository()
+export function getPostRepository(): IPostRepository {
+  if (!instance) {
+    instance = new StaticPostRepository()
   }
-  return clientInstance
-}
-
-/**
- * Get server-side repository (uses filesystem)
- * Only works in Node.js environment
- */
-export async function getServerPostRepository(): Promise<IPostRepository> {
-  if (!serverInstance) {
-    const { FileSystemPostRepository } = await import('./post.filesystem.repository')
-    serverInstance = new FileSystemPostRepository()
-  }
-  return serverInstance
+  return instance
 }

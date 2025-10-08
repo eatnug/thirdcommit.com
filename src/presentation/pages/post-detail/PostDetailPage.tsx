@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { createBlogApi } from '@/domain/blog';
-import { getPostRepository } from '@/adapters/repositories';
+import { getPostRepository } from '@/infrastructure/blog/repositories/post.repository';
 import { Header } from '@/presentation/layouts/Header';
 
 const blogApi = createBlogApi(getPostRepository());

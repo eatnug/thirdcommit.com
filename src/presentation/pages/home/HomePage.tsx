@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { createBlogApi } from '@/domain/blog';
 import { createProjectsApi } from '@/domain/projects';
-import { getPostRepository, getProjectRepository } from '@/adapters/repositories';
+import { getPostRepository } from '@/infrastructure/blog/repositories/post.repository';
+import { getProjectRepository } from '@/infrastructure/projects/repositories/project.repository';
 import { TabsUI } from '@/presentation/components/tabs/TabsUI';
 import { Header } from '@/presentation/layouts/Header';
 

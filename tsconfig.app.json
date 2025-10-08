@@ -25,20 +25,17 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Path aliases for 5-layer architecture */
+    /* Path aliases */
     "baseUrl": ".",
     "paths": {
       "@/domain/*": ["./src/domain/*"],
-      "@/application/*": ["./src/application/*"],
       "@/infrastructure/*": ["./src/infrastructure/*"],
-      "@/adapters/*": ["./src/adapters/*"],
       "@/presentation/*": ["./src/presentation/*"],
       "@/shared/*": ["./src/shared/*"]
     }
   },
   "include": ["src"],
   "exclude": [
-    "src/infrastructure/**/*",
     "scripts/**/*"
   ]
 }

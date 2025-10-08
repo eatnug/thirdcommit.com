@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import { queryClient } from '@/adapters/react-query/query-client';
+import { queryClient } from '@/presentation/config/query-client';
 import { App } from '@/presentation/App';
 import '@/presentation/globals.css';
 
