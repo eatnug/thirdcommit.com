@@ -11,6 +11,7 @@ export default defineConfig({
       '@/infrastructure': path.resolve(__dirname, './src/infrastructure'),
       '@/presentation': path.resolve(__dirname, './src/presentation'),
       '@/shared': path.resolve(__dirname, './src/shared'),
+      '@/hooks': path.resolve(__dirname, './src/hooks'),
     },
   },
   build: {

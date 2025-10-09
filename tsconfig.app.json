@@ -31,7 +31,8 @@
       "@/domain/*": ["./src/domain/*"],
       "@/infrastructure/*": ["./src/infrastructure/*"],
       "@/presentation/*": ["./src/presentation/*"],
-      "@/shared/*": ["./src/shared/*"]
+      "@/shared/*": ["./src/shared/*"],
+      "@/hooks/*": ["./src/hooks/*"]
     }
   },
   "include": ["src"],
