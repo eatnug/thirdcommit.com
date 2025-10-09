@@ -35,7 +35,7 @@ jobs:
       - name: Build site
         run: npm run deploy
         env:
-          VITE_GA_MEASUREMENT_ID: "G-G-QPFYXEH933"
+          VITE_GA_MEASUREMENT_ID: "G-QPFYXEH933"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
