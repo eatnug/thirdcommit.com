@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { createBlogApi } from '@/domain/blog';
 import { getPostRepository } from '@/infrastructure/blog/repositories/post.repository';
 import { Header } from '@/presentation/layouts/Header';
@@ -14,6 +15,16 @@ export function PostDetailPage() {
     queryFn: () => blogApi.getPost(slug!),
     enabled: !!slug,
   });
+
+  useEffect(() => {
+    if (post?.title) {
+      document.title = `${post.title} | Jake Park`;
+    }
+
+    return () => {
+      document.title = 'Jake Park - Software Engineer';
+    };
+  }, [post?.title]);
 
   if (isLoading) {
     return (
