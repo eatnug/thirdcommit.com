@@ -16,12 +16,12 @@ export class PostVisibilityPolicy {
    * Determines if a post should be shown in public lists
    *
    * Business Rule:
-   * - Only published posts (status = 'published') are shown
+   * - All posts are shown (published and draft)
    *
    * @param post - The post to evaluate
    */
   static shouldShowInPublicList(post: Post): boolean {
-    return post.status === 'published'
+    return true
   }
 
   /**

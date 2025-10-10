@@ -13,10 +13,5 @@ export async function getPostBySlugUseCase(
     throw new PostNotFoundError(slug)
   }
 
-  // Apply business policy: Block drafts
-  if (!PostVisibilityPolicy.shouldShowInPublicList(post)) {
-    throw new PostNotFoundError(slug)
-  }
-
   return post
 }

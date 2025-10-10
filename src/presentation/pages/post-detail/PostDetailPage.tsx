@@ -33,6 +33,12 @@ export function PostDetailPage() {
     );
   }
 
+  // Show placeholder content for draft posts
+  const isDraft = post.status === 'draft';
+  const displayContent = isDraft
+    ? '<div style="color: #6b7280; padding: 1rem 0;"><p style="font-size: 2rem; margin: 0;">✍️ing...</p></div>'
+    : post.html;
+
   return (
     <div className="px-4 md:px-[400px] py-[20px] flex flex-col gap-[20px]">
       <Header />
@@ -42,7 +48,7 @@ export function PostDetailPage() {
           <time>{new Date(post.created_at).toLocaleDateString()}</time>
           {post.readingTime && <span>· {post.readingTime}</span>}
         </div>
-        <div dangerouslySetInnerHTML={{ __html: post.html }} />
+        <div dangerouslySetInnerHTML={{ __html: displayContent }} />
       </article>
     </div>
   );
