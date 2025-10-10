@@ -1,7 +1,6 @@
 import type { Post } from '@/domain/blog/entities/post.entity'
 import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
 import { PostNotFoundError } from '@/domain/blog/errors/post.error'
-import { PostVisibilityPolicy } from '@/domain/blog/policies/post-visibility.policy'
 
 export async function getPostBySlugUseCase(
   slug: string,

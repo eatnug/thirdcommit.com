@@ -20,7 +20,7 @@ export class PostVisibilityPolicy {
    *
    * @param post - The post to evaluate
    */
-  static shouldShowInPublicList(post: Post): boolean {
+  static shouldShowInPublicList(_post: Post): boolean {
     return true
   }
 
