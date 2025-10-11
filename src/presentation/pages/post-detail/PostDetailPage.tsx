@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import { createBlogApi } from '@/domain/blog';
@@ -9,8 +9,9 @@ const blogApi = createBlogApi(getPostRepository());
 
 export function PostDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
 
-  const { data: post, isLoading } = useQuery({
+  const { data: post, isLoading, isError } = useQuery({
     queryKey: ['post', slug],
     queryFn: () => blogApi.getPost(slug!),
     enabled: !!slug,
@@ -25,6 +26,12 @@ export function PostDetailPage() {
       document.title = 'Jake Park - Software Engineer';
     };
   }, [post?.title]);
+
+  useEffect(() => {
+    if (isError || (!isLoading && !post)) {
+      navigate('/', { replace: true });
+    }
+  }, [isError, isLoading, post, navigate]);
 
   if (isLoading) {
     return (
