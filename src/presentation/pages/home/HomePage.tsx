@@ -22,17 +22,21 @@ export function HomePage() {
 
   if (postsLoading || projectsLoading) {
     return (
-      <div className="px-4 md:px-[400px] py-[20px]">
-        <Header />
-        <div>Loading...</div>
+      <div className="px-4 py-[20px] flex flex-col items-center">
+        <div className="w-full max-w-[700px]">
+          <Header />
+          <div>Loading...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="px-4 md:px-[400px] py-[20px] flex flex-col gap-[20px]">
-      <Header />
-      <TabsUI posts={posts} projects={projects} />
+    <div className="px-4 py-[20px] flex flex-col gap-[20px] items-center">
+      <div className="w-full max-w-[700px]">
+        <Header />
+        <TabsUI posts={posts} projects={projects} />
+      </div>
     </div>
   );
 }
