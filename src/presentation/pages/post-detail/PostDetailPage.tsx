@@ -14,6 +14,14 @@ export function PostDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [html, setHtml] = useState<string>('');
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const { data: post, isLoading, isError } = useQuery({
     queryKey: ['post', slug],
@@ -47,27 +55,19 @@ export function PostDetailPage() {
   if (isLoading) {
     return (
       <div className="flex flex-col">
-        {/* Mobile header */}
-        <div className="md:hidden">
+        {isMobile ? (
           <Header variant="mobile-simple" />
-        </div>
-
-        {/* Desktop header */}
-        <div className="hidden md:flex justify-center px-4 py-[20px]">
-          <div className="w-full max-w-[700px]">
-            <Header />
+        ) : (
+          <div className="flex justify-center px-4 py-[20px]">
+            <div className="w-full max-w-[700px]">
+              <Header />
+            </div>
           </div>
-        </div>
+        )}
 
-        {/* Skeleton content with ToC */}
         <div className="flex justify-center gap-8 px-5 py-5">
-          {/* Left spacer (Desktop Only, ≥1280px) */}
           <div className="hidden xl:block w-[250px] shrink-0" />
-
-          {/* Article Skeleton */}
           <ArticleSkeleton />
-
-          {/* ToC Skeleton (Desktop Only, ≥1280px) */}
           <aside className="hidden xl:block w-[250px] shrink-0">
             <TableOfContentsSkeleton />
           </aside>
@@ -95,26 +95,21 @@ export function PostDetailPage() {
 
   return (
     <div className="flex flex-col">
-      {/* Mobile header */}
-      <div className="md:hidden">
+      {isMobile ? (
         <Header variant="mobile-simple" />
-      </div>
-
-      {/* Desktop header */}
-      <div className="hidden md:flex justify-center px-4 py-[20px]">
-        <div className="w-full max-w-[700px]">
-          <Header />
+      ) : (
+        <div className="flex justify-center px-4 py-[20px]">
+          <div className="w-full max-w-[700px]">
+            <Header />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Post content with ToC */}
       <div className="flex justify-center gap-8 px-5 py-5">
-        {/* Left spacer (Desktop Only, ≥1280px) - same width as ToC for centering */}
         {!isDraft && <div className="hidden xl:block w-[250px] shrink-0" />}
 
-        {/* Main Content */}
-        <article className="prose prose-lg max-w-[700px] w-full">
-          <h1 id="title">{post.title}</h1>
+        <article className="prose prose-lg max-w-[700px] w-full [&_h2]:text-[1.375rem] [&_h2]:mt-6 [&_h2]:mb-3 md:[&_h2]:text-[1.5rem] md:[&_h2]:mt-8 md:[&_h2]:mb-4">
+          <h1 id="title" className="!text-2xl md:!text-3xl">{post.title}</h1>
           <div className="flex items-center gap-2 text-sm text-gray-500 not-prose">
             <time>{new Date(post.created_at).toLocaleDateString()}</time>
             {post.readingTime && <span>· {post.readingTime}</span>}
@@ -122,7 +117,6 @@ export function PostDetailPage() {
           <div dangerouslySetInnerHTML={{ __html: displayContent }} />
         </article>
 
-        {/* ToC Sidebar (Desktop Only, ≥1280px) */}
         {!isDraft && (
           <aside className="hidden xl:block w-[250px] shrink-0">
             <TableOfContents htmlContent={displayContent} postTitle={post.title} />

@@ -92,8 +92,8 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ htmlContent, p
     const baseClasses = 'block transition-all duration-150 ease-in-out focus:outline-none rounded'
 
     const levelClasses = {
-      0: 'text-base font-bold',
-      1: 'text-base font-semibold',
+      0: 'text-sm font-bold',
+      1: 'text-sm font-semibold',
       2: 'text-sm font-medium',
       3: 'text-xs font-normal pl-4'
     }[level]
