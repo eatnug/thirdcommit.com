@@ -1,4 +1,4 @@
-import { marked } from 'marked'
+import { marked, type Tokens } from 'marked'
 import DOMPurify from 'isomorphic-dompurify'
 import { createHighlighter } from 'shiki'
 
@@ -19,6 +19,7 @@ export class MarkdownService {
     const highlighter = await getHighlighter()
 
     const renderer = new marked.Renderer()
+    let headingIndex = 0
 
     renderer.code = ({ text, lang }) => {
       if (lang && highlighter) {
@@ -34,9 +35,24 @@ export class MarkdownService {
       return `<pre><code>${text}</code></pre>`
     }
 
+    renderer.heading = ({ tokens, depth }) => {
+      const text = this.parseTokens(tokens)
+      const id = `heading-${headingIndex++}`
+      return `<h${depth} id="${id}">${text}</h${depth}>\n`
+    }
+
     marked.use({ renderer })
     const html = await marked.parse(markdown)
     return DOMPurify.sanitize(html)
+  }
+
+  private parseTokens(tokens: Tokens.Generic[]): string {
+    return tokens.map(token => {
+      if ('text' in token) {
+        return token.text
+      }
+      return ''
+    }).join('')
   }
 }
 

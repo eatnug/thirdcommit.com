@@ -121,7 +121,6 @@ export class ApiPostRepository implements IPostRepository {
       published_at: data.published_at ? new Date(data.published_at as string) : null,
       description: (data.description as string) || '',
       content: data.content as string,
-      html: data.html as string,
       readingTime: data.readingTime as string,
     }
   }

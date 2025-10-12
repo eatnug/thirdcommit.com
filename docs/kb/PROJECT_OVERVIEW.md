@@ -1,694 +1,388 @@
 # thirdcommit.com - Project Overview
 
-**A personal blog and portfolio platform showcasing technical writing and projects**
+**A personal blog and portfolio platform for sharing technical writing and career reflections**
+
+---
 
 ## What Is This?
 
-thirdcommit.com is a personal website for Jake Park (@eatnug), combining a technical blog with a project portfolio. It's designed as a static site generator that reads markdown posts from the filesystem, converts them to HTML, and deploys to GitHub Pages. The site features both blog posts (primarily in Korean) about career reflections and technical topics, as well as a showcase of notable projects including DoctorNow, The Terminal X, and others.
+thirdcommit.com은 Jake Park의 개인 블로그 및 포트폴리오 플랫폼입니다. 주로 커리어 회고와 기술적 인사이트를 공유하며, 진행한 프로젝트들을 소개합니다.
 
-## Why This Exists
-
-This project serves multiple purposes:
-- **Personal expression**: A platform to share career reflections, technical insights, and personal growth stories
-- **Technical showcase**: Demonstrates clean architecture principles and modern web development practices
-- **Learning laboratory**: A real-world codebase for experimenting with volatility-based hexagonal architecture
-- **Portfolio**: Showcases both the projects built and the code that powers the site itself
-
-## Core Business Logic
-
-### What the Application Does
-
-1. **Blog Management**
-   - Reads markdown posts from `storage/posts/` directory
-   - Parses frontmatter metadata (title, slug, status, dates, description)
-   - Filters posts by publication status (draft vs published)
-   - Converts markdown to HTML with syntax highlighting
-   - Calculates reading time estimates
-   - Generates SEO-friendly static HTML pages
-
-2. **Project Showcase**
-   - Displays a curated list of notable projects
-   - Provides descriptions and external links
-   - Supports both completed projects and work-in-progress items
-
-3. **Editor (Development Only)**
-   - WYSIWYG markdown editor with live preview
-   - Draft management and publishing workflow
-   - Metadata editing (title, description)
-   - Auto-save functionality with keyboard shortcuts
-   - Local storage persistence
-
-4. **Static Site Generation**
-   - Pre-renders all pages using Puppeteer
-   - Generates individual HTML files for each post
-   - Creates JSON data files for posts and projects
-   - Optimizes for fast loading and SEO
-
-### Key Business Rules (Domain Policies)
-
-**Post Visibility Policy** ([src/domain/blog/policies/post-visibility.policy.ts](src/domain/blog/policies/post-visibility.policy.ts))
-- Published posts appear in public listings
-- Draft posts are hidden in production
-- Draft posts visible in development environment
-- Posts sorted by publication date (newest first)
-
-## Technical Architecture
-
-### Architectural Philosophy
-
-The codebase follows a **volatility-based hexagonal architecture** that organizes code by change frequency rather than traditional technical layers:
-
-- **🔴 TIER 1 (Volatile)**: React components, UI, framework code → Changes when migrating frameworks
-- **🟡 TIER 2 (Moderate)**: Infrastructure adapters, repositories → Changes when switching data sources
-- **🟢 TIER 3 (Stable)**: Business logic, domain entities, policies → Survives all technology changes
-
-This architecture makes migration paths explicit and protects business logic from framework churn.
-
-### Technology Stack
-
-**Frontend Framework**
-- **Vite** (migrated from Next.js) - Fast build tooling and dev server
-- **React 19** with React Router - UI framework and routing
-- **TypeScript** - Type safety
-- **TanStack Query** - Server state management
-- **Tailwind CSS** - Styling
-
-**Content Pipeline**
-- **gray-matter** - YAML frontmatter parsing
-- **marked** - Markdown to HTML conversion
-- **shiki** - Syntax highlighting for code blocks
-- **reading-time** - Estimates reading duration
-
-**Static Generation**
-- **Puppeteer** - Headless browser for pre-rendering
-- **Node.js scripts** - Build pipeline orchestration
-
-**Deployment**
-- **GitHub Actions** - CI/CD automation
-- **GitHub Pages** - Static hosting
-- **Custom domain** - thirdcommit.com via CNAME
-
-### Directory Structure
-
-```
-thirdcommit.com/
-├── src/
-│   ├── domain/                    # 🟢 TIER 3: Business Logic (Stable)
-│   │   ├── blog/
-│   │   │   ├── entities/          # Post, PostFormData models
-│   │   │   ├── policies/          # PostVisibilityPolicy (business rules)
-│   │   │   ├── ports/             # IPostRepository interface
-│   │   │   ├── use-cases/         # getPosts, getPostBySlug, saveDraft, etc.
-│   │   │   ├── errors/            # PostNotFoundError
-│   │   │   ├── services/          # MarkdownService
-│   │   │   └── index.ts           # Public API (barrel export)
-│   │   └── projects/
-│   │       ├── entities/          # Project model
-│   │       ├── ports/             # IProjectRepository interface
-│   │       ├── use-cases/         # getProjects
-│   │       └── index.ts           # Public API
-│   │
-│   ├── infrastructure/            # 🟡 TIER 2: Adapters (Moderate)
-│   │   ├── blog/
-│   │   │   ├── repositories/
-│   │   │   │   ├── post.static.repository.ts    # Reads from JSON files
-│   │   │   │   ├── post.api.repository.ts       # DEV: API endpoint
-│   │   │   │   ├── post.filesystem.repository.ts # Reads markdown files
-│   │   │   │   └── post.repository.ts           # IOC container
-│   │   │   └── dto/               # Data transformation objects
-│   │   └── projects/
-│   │       └── repositories/
-│   │           ├── project.static.repository.ts # JSON-based
-│   │           ├── project.inmemory.repository.ts # Static data
-│   │           └── project.repository.ts        # IOC container
-│   │
-│   ├── presentation/              # 🔴 TIER 1: UI Layer (Volatile)
-│   │   ├── pages/
-│   │   │   ├── home/              # HomePage with blog/project tabs
-│   │   │   ├── post-detail/       # PostDetailPage with markdown rendering
-│   │   │   └── editor/            # EditorPage (dev-only)
-│   │   ├── layouts/               # Header component
-│   │   ├── components/            # Reusable UI (tabs, navigation)
-│   │   └── config/                # React Query client
-│   │
-│   ├── shared/                    # ⚪ Cross-cutting concerns
-│   │   └── utils/                 # Framework-agnostic utilities
-│   │       ├── cn.ts              # className helper
-│   │       ├── debounce.ts        # Debounce utility
-│   │       ├── id.ts              # ULID generation
-│   │       └── local-storage.ts   # Browser storage wrapper
-│   │
-│   ├── hooks/                     # React hooks (usePageTracking)
-│   └── main.tsx                   # Application entry point
-│
-├── storage/
-│   └── posts/                     # Source markdown files
-│       └── *.md                   # Post content with frontmatter
-│
-├── public/                        # Static assets
-│   ├── posts.json                 # Generated: List of published posts
-│   ├── post-{slug}.json           # Generated: Individual post data + HTML
-│   ├── projects.json              # Generated: Projects list
-│   └── CNAME                      # Custom domain configuration
-│
-├── dist/                          # Build output
-│   ├── index.html                 # Pre-rendered homepage
-│   └── posts/{slug}/index.html    # Pre-rendered post pages
-│
-├── scripts/
-│   ├── build-static-data.mjs      # Converts markdown → JSON
-│   ├── generate-static-html.mjs   # Pre-renders pages with Puppeteer
-│   └── dev-api-server.mjs         # Development API server
-│
-├── docs/
-│   ├── kb/                        # Knowledge base
-│   │   └── ARCHITECTURE.md        # Detailed architecture guide
-│   ├── ideas/                     # Feature proposals
-│   ├── plans/                     # Implementation plans
-│   └── specs/                     # Technical specifications
-│
-└── .github/workflows/
-    └── deploy.yml                 # GitHub Actions CI/CD
-```
-
-## Data Flow
-
-### Production Flow (Static Site)
-
-```
-1. Developer writes markdown → storage/posts/foo.md
-                                    ↓
-2. Build script reads files → build-static-data.mjs
-                                    ↓
-3. Parses frontmatter + markdown → gray-matter, marked
-                                    ↓
-4. Generates JSON → public/posts.json, public/post-{slug}.json
-                                    ↓
-5. Vite builds React app → dist/assets/
-                                    ↓
-6. Puppeteer pre-renders pages → dist/index.html, dist/posts/{slug}/index.html
-                                    ↓
-7. GitHub Actions deploys → gh-pages branch → thirdcommit.com
-```
-
-### Development Flow (Editor Mode)
-
-```
-1. Editor UI → EditorPage component
-                    ↓
-2. User types markdown → Local state + debounced autosave
-                    ↓
-3. Save action → savePostUseCase(data, repository)
-                    ↓
-4. Repository writes → storage/posts/{slug}.md (via API server)
-                    ↓
-5. Preview panel → Markdown converted to HTML in browser
-```
-
-### Request Flow (User visits thirdcommit.com/posts/some-post)
-
-```
-1. Browser requests → /posts/some-post
-                              ↓
-2. GitHub Pages serves → dist/posts/some-post/index.html (pre-rendered)
-                              ↓
-3. React hydrates → PostDetailPage component
-                              ↓
-4. Client-side routing → React Router takes over navigation
-```
-
-## Key Patterns & Conventions
-
-### 1. Domain-Driven Public API
-
-Each domain (blog, projects) exposes a factory function for dependency injection:
-
-```typescript
-// src/domain/blog/index.ts
-export function createBlogApi(repository: IPostRepository) {
-  return {
-    getPosts: () => getPostsUseCase(repository),
-    getPost: (slug: string) => getPostBySlugUseCase(slug, repository),
-    savePost: (input) => savePostUseCase(input, repository),
-    // ...
-  }
-}
-
-// Usage in components
-const blogApi = createBlogApi(getPostRepository());
-const posts = await blogApi.getPosts();
-```
-
-### 2. Repository Pattern with IOC
-
-Infrastructure layer provides repository implementations:
-
-```typescript
-// src/infrastructure/blog/repositories/post.repository.ts
-export function getPostRepository(): IPostRepository {
-  return new StaticPostRepository(); // Reads from /public/*.json
-}
-
-// Can swap implementations without changing domain code:
-// - StaticPostRepository (production: JSON files)
-// - ApiPostRepository (development: /api endpoints)
-// - FileSystemPostRepository (build-time: direct markdown access)
-```
-
-### 3. Policy Objects for Business Rules
-
-Business logic encapsulated in reusable policy classes:
-
-```typescript
-// src/domain/blog/policies/post-visibility.policy.ts
-export class PostVisibilityPolicy {
-  static shouldShowInPublicList(post: Post, environment: string): boolean {
-    return environment === 'production' ? !post.draft : true;
-  }
-}
-```
-
-### 4. Use Case Functions
-
-Pure business operations as standalone functions:
-
-```typescript
-// src/domain/blog/use-cases/get-posts.use-case.ts
-export async function getPostsUseCase(
-  repository: IPostRepository
-): Promise<Post[]> {
-  const posts = await repository.getPosts();
-  return posts.filter(post => post.status === 'published');
-}
-```
-
-### 5. Post Metadata Format
-
-All posts use YAML frontmatter:
-
-```yaml
----
-id: 01K7A16H23H07KDDD233NEDNVV   # ULID identifier
-slug: post-slug-here               # URL-friendly identifier
-title: Post Title                  # Display title
-description: SEO summary           # Meta description
-status: published | draft          # Visibility status
-created_at: '2025-10-11T16:20:56.515Z'
-updated_at: '2025-10-11T16:20:57.043Z'
-published_at: '2025-10-11T16:20:57.043Z'
 ---
 
-Post content in markdown...
-```
+## Business Domains
 
-## Build & Deployment
+### 1. Blog Domain (블로그)
 
-### Development Mode
+**목적**: 마크다운 기반 글쓰기 및 발행 플랫폼
 
-```bash
-npm run dev
-# Starts two servers:
-# - Vite dev server (localhost:3000) - React app
-# - API server (localhost:4000) - File system operations
-```
+#### Core Entities
+- **Post (포스트)**: 발행된 블로그 글
+  - 메타데이터: 제목, 슬러그, 작성일, 발행일, 상태(draft/published)
+  - 콘텐츠: 마크다운 형식 본문
+  - 부가정보: 예상 읽기 시간, 설명
 
-- Live reload for instant feedback
-- Editor accessible at `/editor`
-- Draft posts visible
-- API endpoints for saving/deleting posts
+#### Use Cases
 
-### Production Build
+**UC1: 포스트 목록 조회 (Get Posts)**
+- **Actor**: 방문자
+- **Description**: 발행된 모든 포스트 목록을 최신순으로 조회
+- **Business Rules**:
+  - Production 환경: `status === 'published'`인 포스트만 노출
+  - Development 환경: draft 포스트도 노출
+  - 최신순 정렬 (published_at 기준)
 
-```bash
-npm run build
-# 1. build-static-data.mjs → Generates JSON files
-# 2. tsc -b → TypeScript compilation
-# 3. vite build → Bundles React app
-# 4. generate-html → Pre-renders pages with Puppeteer
-```
+**UC2: 포스트 상세 조회 (Get Post by Slug)**
+- **Actor**: 방문자
+- **Description**: 특정 포스트의 전체 내용을 조회
+- **Business Rules**:
+  - 슬러그로 포스트 검색
+  - 마크다운 → HTML 변환
+  - 코드 블록 문법 강조 (shiki)
+  - 헤딩에 자동 ID 부여 (목차 생성용)
+  - 존재하지 않는 포스트: 404 처리
 
-Output in `dist/`:
-- Static HTML files (pre-rendered, SEO-optimized)
-- JavaScript bundles (for client-side hydration)
-- JSON data files (for dynamic data fetching)
-- Assets (CSS, images)
+**UC3: 포스트 작성/수정 (Save Post)**
+- **Actor**: 작성자 (개발 환경 전용)
+- **Description**: 새 포스트 작성 또는 기존 포스트 수정
+- **Business Rules**:
+  - 개발 환경에서만 사용 가능
+  - 슬러그 중복 불가
+  - 자동 저장 (3초 debounce)
+  - 메타데이터 자동 생성 (ULID, 타임스탬프)
 
-### Deployment Pipeline
+**UC4: 포스트 발행 (Publish Post)**
+- **Actor**: 작성자
+- **Description**: draft 상태의 포스트를 published로 전환
+- **Business Rules**:
+  - `status`를 'published'로 변경
+  - `published_at` 타임스탬프 기록
+  - 발행 후 목록에 노출
 
-**Trigger**: Push to `main` branch
+**UC5: 포스트 삭제 (Delete Post)**
+- **Actor**: 작성자 (개발 환경 전용)
+- **Description**: 포스트를 완전히 삭제
+- **Business Rules**:
+  - 개발 환경에서만 사용 가능
+  - 파일 시스템에서 영구 삭제
 
-**GitHub Actions** (`.github/workflows/deploy.yml`):
-1. Checkout repository
-2. Install dependencies
-3. Run `npm run deploy`:
-   - Builds site
-   - Adds `.nojekyll` (disable Jekyll processing)
-   - Copies CNAME file
-4. Deploy to `gh-pages` branch
-5. GitHub Pages serves from `gh-pages`
+**UC6: Draft 목록 조회 (Get Drafts)**
+- **Actor**: 작성자 (개발 환경 전용)
+- **Description**: 작성 중인 draft 포스트 목록 조회
+- **Business Rules**:
+  - `status === 'draft'`인 포스트만 반환
 
-**Custom Domain**: `thirdcommit.com` (configured via CNAME)
+#### Domain Services
 
-## Environment Configuration
+**MarkdownService**
+- 마크다운 → HTML 변환
+- 코드 블록 문법 강조 (shiki)
+- 헤딩 자동 ID 부여 (`heading-0`, `heading-1`, ...)
+- XSS 방어 (DOMPurify sanitization)
 
-### Build-time Variables
+#### Business Policies
 
-```bash
-VITE_GA_MEASUREMENT_ID=G-QPFYXEH933  # Google Analytics tracking
-```
+**PostVisibilityPolicy**
+- Production: draft 포스트 숨김
+- Development: 모든 포스트 노출
+- 정렬: published_at 기준 최신순
 
-### Mode Detection
+---
 
-```typescript
-import.meta.env.DEV   // true in development
-import.meta.env.PROD  // true in production
-```
+### 2. Projects Domain (프로젝트 포트폴리오)
 
-Used to:
-- Show/hide editor routes
-- Enable React Query devtools
-- Toggle draft post visibility
+**목적**: 주요 프로젝트 및 작업물 소개
 
-## Testing Strategy
+#### Core Entities
+- **Project (프로젝트)**: 포트폴리오 항목
+  - 기본 정보: 이름, 설명
+  - 링크: 외부 URL (GitHub, 배포 URL 등)
+  - 상태: 완료/진행중
 
-The architecture supports multiple testing levels:
+#### Use Cases
 
-**Unit Tests** (Domain Layer)
-```typescript
-// Test business logic in isolation
-const mockRepo: IPostRepository = { getPosts: jest.fn() };
-const posts = await getPostsUseCase(mockRepo);
-```
+**UC1: 프로젝트 목록 조회 (Get Projects)**
+- **Actor**: 방문자
+- **Description**: 모든 프로젝트 목록 조회
+- **Business Rules**:
+  - 정적 데이터 반환 (하드코딩)
+  - 순서: 수동 지정 (중요도순)
 
-**Integration Tests** (Infrastructure Layer)
-```typescript
-// Test repository implementations
-const repo = new StaticPostRepository();
-const posts = await repo.getPosts();
-```
+---
 
-**E2E Tests** (Presentation Layer)
-```typescript
-// Test user flows
-render(<HomePage />);
-expect(screen.getByText('Post Title')).toBeInTheDocument();
-```
+### 3. Reading Experience Domain (독서 경험)
 
-_(Note: Test suites not yet implemented, but architecture designed for testability)_
+**목적**: 포스트 읽기 환경 최적화
+
+#### Features
+
+**F1: Table of Contents (목차)**
+- **Target**: 데스크탑 사용자 (≥1280px)
+- **Description**: 포스트의 구조를 한눈에 파악하고 빠르게 이동
+- **Components**:
+  - 헤딩 계층 구조 표시 (h1, h2, h3)
+  - 현재 읽고 있는 섹션 하이라이트
+  - 클릭 시 해당 섹션으로 스크롤
+  - 포스트 타이틀 포함
+- **Business Rules**:
+  - 뷰포트 33% 위치 기준으로 액티브 섹션 감지
+    - 근거: Eye-tracking 연구 결과 (사용자 시선이 30-40% 위치에 집중)
+  - 항상 하나의 헤딩이 하이라이트 (빈 상태 방지)
+  - Draft 포스트는 목차 미표시
+- **Layout**: `[Spacer 250px] - [Content 700px] - [TOC 250px]`
+
+**F2: Reading Time Estimation (예상 읽기 시간)**
+- **Description**: 포스트를 읽는데 걸리는 시간 표시
+- **Business Rules**:
+  - 평균 읽기 속도 기준 계산
+  - 포스트 목록 및 상세 페이지에 표시
+
+**F3: Syntax Highlighting (코드 강조)**
+- **Description**: 코드 블록의 가독성 향상
+- **Business Rules**:
+  - shiki 엔진 사용
+  - 다양한 언어 지원
+  - 라인 번호 표시
+
+---
 
 ## Content Strategy
 
-### Current Content
+### 현재 콘텐츠
 
-**Blog Posts** (9 published, in Korean)
-- "방황을 통과하는 일" series (personal career reflections)
-- Topics: Career transitions, self-reflection, personal growth
-- Target audience: Korean-speaking developers and professionals
+**Blog Posts** (9편 발행, 한국어)
+- "방황을 통과하는 일" 시리즈 (커리어 회고)
+- 주제: 커리어 전환, 자기 성찰, 개인 성장
+- 타겟: 한국어권 개발자 및 직장인
 
-**Projects Showcase**
-- DoctorNow (telemedicine app, former employer)
-- The Terminal X (AI research agent for finance)
-- My Feed (WIP: customizable content aggregator)
+**Projects**
+- DoctorNow (원격 진료 앱, 전 직장)
+- The Terminal X (금융용 AI 리서치 에이전트)
+- My Feed (WIP: 커스터마이징 가능한 콘텐츠 애그리게이터)
 
-### Post Workflow
+### 발행 워크플로우
 
-1. **Draft Creation**
-   - Write in editor (`/editor` in dev mode)
-   - Auto-saves to `storage/posts/`
-   - Status: `draft`
-
-2. **Publish**
-   - Click "Publish" button
-   - Updates status to `published`
-   - Sets `published_at` timestamp
-
-3. **Build**
-   - Markdown → HTML conversion
-   - JSON generation
-   - Static HTML pre-rendering
-
-4. **Deploy**
-   - Push to `main` branch
-   - GitHub Actions builds & deploys
-   - Live on thirdcommit.com
-
-## Migration History
-
-### From Next.js to Vite (October 2025)
-
-**Why**: Simplify architecture, faster builds, remove unnecessary server-side complexity
-
-**Changes**:
-- Replaced Next.js App Router → React Router
-- Removed server components → Client-side rendering with pre-rendered HTML
-- Simplified data fetching → Static JSON + TanStack Query
-- Faster dev server startup (Next.js: ~3s → Vite: <1s)
-
-**Migration preserved**:
-- Domain logic (zero changes)
-- Repository interfaces (zero changes)
-- Business rules and policies (zero changes)
-
-This validates the volatility-based architecture: framework changes only affected TIER 1 (presentation layer).
-
-## Known Limitations & Future Work
-
-### Current Limitations
-
-1. **No Backend Database**
-   - All content stored as markdown files
-   - Editor only works in development mode
-   - No remote editing capability
-
-2. **No Search**
-   - Cannot search posts by keyword
-   - No tagging or categorization
-
-3. **No Comments or Interactions**
-   - Static site, no dynamic features
-   - No social features
-
-4. **Limited Editor**
-   - Basic markdown only
-   - No image upload support
-   - No collaborative editing
-
-5. **Korean Content Only**
-   - No internationalization
-   - Single language support
-
-### Potential Enhancements
-
-**Infrastructure Improvements**
-- Add full-text search (Algolia or local search index)
-- Implement CMS backend (Contentful, Sanity, or custom API)
-- Add image upload/optimization pipeline
-- RSS feed generation
-
-**Content Features**
-- Post tagging and categories
-- Related posts suggestions
-- Table of contents generation
-- Share buttons and SEO optimization
-
-**Editor Enhancements**
-- Rich text editing mode
-- Image drag-and-drop
-- Draft scheduling
-- Preview in mobile viewport
-
-**Analytics & Engagement**
-- Page view tracking (Google Analytics)
-- Read time tracking
-- Popular posts widget
-- Newsletter signup
-
-## Getting Started for Developers
-
-### Prerequisites
-
-- Node.js 20+
-- npm or yarn
-
-### Setup
-
-```bash
-# Clone repository
-git clone https://github.com/eatnug/thirdcommit.com.git
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Open browser
-open http://localhost:3000
+```
+1. Draft 작성
+   ↓
+   (Editor에서 작성 또는 markdown 파일 직접 수정)
+   ↓
+2. 검토 및 수정
+   ↓
+3. Publish (status를 published로 변경)
+   ↓
+4. Build & Deploy
+   ↓
+   (Markdown → HTML → Static JSON → Pre-render → Deploy)
+   ↓
+5. 공개 (thirdcommit.com에 노출)
 ```
 
-### Key Commands
+---
 
-```bash
-npm run dev          # Start dev servers (Vite + API)
-npm run build        # Build for production
-npm run deploy       # Build + prepare for GitHub Pages
-npm run preview      # Preview production build locally
-npm run lint         # Run ESLint
+## Data Model
+
+### Post Entity
+
+```typescript
+interface Post {
+  id: string                    // ULID
+  slug: string                  // URL-friendly identifier
+  title: string                 // 포스트 제목
+  description: string           // SEO 설명
+  status: 'draft' | 'published' // 발행 상태
+  content: string               // 마크다운 본문
+  html?: string                 // 변환된 HTML (빌드 시)
+  readingTime?: string          // 예상 읽기 시간
+  created_at: string            // ISO 8601 timestamp
+  updated_at: string            // ISO 8601 timestamp
+  published_at?: string         // ISO 8601 timestamp
+}
 ```
 
-### Adding a New Post
+### Project Entity
 
-1. Create markdown file in `storage/posts/{slug}.md`
-2. Add YAML frontmatter with required fields
-3. Write content in markdown
-4. In dev mode: Use editor at `/editor`
-5. Commit and push to deploy
+```typescript
+interface Project {
+  id: string           // Unique identifier
+  name: string         // 프로젝트 이름
+  description: string  // 설명
+  link: string         // 외부 링크
+  status: string       // 상태 (예: 'completed', 'in-progress')
+}
+```
 
-### Code Style & Conventions
+### TocItem (Reading Experience)
 
-- **Architecture**: Follow volatility-based layers (TIER 1/2/3)
-- **Imports**: Use path aliases (`@/domain`, `@/infrastructure`, `@/presentation`)
-- **Dependencies**: Respect dependency direction (outward → inward)
-- **Business logic**: Always in domain layer, never in UI
-- **TypeScript**: Strict mode, explicit types for public APIs
+```typescript
+interface TocItem {
+  level: 0 | 1 | 2 | 3  // 0=title, 1=h1, 2=h2, 3=h3
+  text: string          // 헤딩 텍스트
+  id: string            // 앵커 ID (heading-0, heading-1, ...)
+  children?: TocItem[]  // 중첩된 하위 헤딩 (h3 under h2)
+}
+```
 
-## Domain Model
+---
 
-### Blog Domain
+## Domain Rules & Policies
 
-**Entities**
-- `Post`: Published content with metadata
-- `PostFormData`: Form input for editor
+### Post Visibility Rules
 
-**Repositories**
-- `IPostRepository`: Abstract interface
-- `StaticPostRepository`: Reads from JSON files
-- `ApiPostRepository`: Calls REST endpoints
-- `FileSystemPostRepository`: Direct markdown access
+```typescript
+class PostVisibilityPolicy {
+  static shouldShowInPublicList(post: Post, environment: string): boolean {
+    return environment === 'production'
+      ? post.status === 'published'
+      : true; // dev에서는 draft도 노출
+  }
+}
+```
 
-**Use Cases**
-- `getPostsUseCase`: Retrieve all published posts
-- `getPostBySlugUseCase`: Retrieve single post by slug
-- `getDraftsUseCase`: Retrieve all drafts
-- `savePostUseCase`: Save draft or update post
-- `publishPostUseCase`: Change status to published
-- `deletePostUseCase`: Remove post
+### Markdown Processing Rules
 
-**Policies**
-- `PostVisibilityPolicy`: Business rules for post visibility
+1. **Heading ID Generation**
+   - 모든 h1, h2, h3에 자동으로 ID 부여
+   - 형식: `heading-{순서}` (예: heading-0, heading-1)
+   - 한글 헤딩도 지원 (slug화 불필요)
 
-### Projects Domain
+2. **Code Highlighting**
+   - shiki 엔진 사용
+   - 지원 언어: JavaScript, TypeScript, Python, Go, Rust 등
 
-**Entities**
-- `Project`: Portfolio item with title, description, link
+3. **XSS Protection**
+   - DOMPurify로 HTML sanitize
+   - 안전한 태그만 허용
 
-**Repositories**
-- `IProjectRepository`: Abstract interface
-- `StaticProjectRepository`: Reads from JSON
-- `InMemoryProjectRepository`: Hardcoded data
+### TOC Generation Rules
 
-**Use Cases**
-- `getProjectsUseCase`: Retrieve all projects
+1. **Heading Extraction**
+   - h1, h2, h3만 추출 (h4, h5, h6 무시)
+   - h3는 부모 h2 아래에 중첩
 
-## Common Scenarios
+2. **Active Section Detection**
+   - 뷰포트 33% 위치를 기준선으로 설정
+   - 기준선을 지나간 마지막 헤딩을 활성화
+   - 헤딩이 없으면 첫 번째 헤딩 활성화
 
-### How to Add a Feature
+3. **Visibility**
+   - Desktop (≥1280px): TOC 표시
+   - Mobile/Tablet (<1280px): TOC 숨김
+   - Draft 포스트: TOC 숨김
 
-1. **Define domain logic** (TIER 3)
-   - Create entity types in `src/domain/{feature}/entities/`
-   - Write use cases in `src/domain/{feature}/use-cases/`
-   - Add business rules in `src/domain/{feature}/policies/`
-   - Define port interface in `src/domain/{feature}/ports/`
+---
 
-2. **Implement infrastructure** (TIER 2)
-   - Create repository in `src/infrastructure/{feature}/repositories/`
-   - Implement port interface
-   - Add to IOC container
+## Integration Points
 
-3. **Build UI** (TIER 1)
-   - Create page component in `src/presentation/pages/{feature}/`
-   - Add route in `src/presentation/App.tsx`
-   - Use TanStack Query for data fetching
+### Content Pipeline
 
-### How to Switch Data Sources
+```
+Markdown File (storage/posts/*.md)
+  ↓
+[gray-matter] Parse frontmatter
+  ↓
+[MarkdownService] Convert to HTML
+  ├─ [marked] Markdown → HTML
+  ├─ [shiki] Code highlighting
+  └─ [DOMPurify] XSS protection
+  ↓
+Static JSON (public/post-{slug}.json)
+  ↓
+Pre-rendered HTML (dist/posts/{slug}/index.html)
+  ↓
+Deployed to GitHub Pages
+```
 
-Example: Move from static JSON to CMS API
+### Reading Flow
 
-1. Create new repository: `src/infrastructure/blog/repositories/post.cms.repository.ts`
-2. Implement `IPostRepository` interface
-3. Update IOC container: `src/infrastructure/blog/repositories/post.repository.ts`
-4. No changes needed in domain or presentation layers
+```
+User visits /posts/{slug}
+  ↓
+Browser loads pre-rendered HTML
+  ↓
+React hydrates
+  ↓
+PostDetailPage renders
+  ├─ Post content (dangerouslySetInnerHTML)
+  └─ TableOfContents (desktop only)
+      ├─ Parse HTML for headings
+      ├─ Build TOC structure
+      ├─ Attach scroll listener
+      └─ Update active section
+```
 
-### How to Migrate Frameworks
+---
 
-Example: React → Vue
+## Business Metrics & KPIs
 
-1. Rewrite presentation layer (TIER 1): `src/presentation/`
-2. Keep domain layer unchanged (TIER 3): `src/domain/`
-3. Keep infrastructure unchanged (TIER 2): `src/infrastructure/`
-4. Adapt shared utilities if needed: `src/shared/`
+### Content Metrics
+- 총 발행 포스트 수: 9편
+- 평균 읽기 시간: ~5-10분
+- 주요 주제: 커리어 회고, 개인 성장
 
-## Troubleshooting
+### Engagement Metrics (Future)
+- 페이지뷰 (Google Analytics)
+- 평균 체류 시간
+- 가장 많이 읽힌 포스트
+- TOC 클릭률
 
-### Build fails with "Module not found"
+---
 
-Check path aliases in:
-- `vite.config.ts` (`resolve.alias`)
-- `tsconfig.json` (`compilerOptions.paths`)
+## Domain Evolution
 
-### Posts not appearing
+### Completed Features (October 2025)
+- ✅ 마크다운 기반 포스트 작성
+- ✅ Draft/Published 상태 관리
+- ✅ 코드 문법 강조
+- ✅ 정적 사이트 생성
+- ✅ Desktop TOC with active section highlighting
+- ✅ 예상 읽기 시간 계산
 
-1. Check post status: Must be `published`
-2. Run build script: `npm run build`
-3. Verify JSON generated: `public/posts.json`
-4. Check PostVisibilityPolicy logic
+### Future Enhancements
 
-### Editor not saving
+**Short-term**
+- Mobile TOC (collapsible, bottom sheet)
+- Post tagging & categorization
+- Related posts suggestion
+- Share buttons (Twitter, LinkedIn)
 
-1. Ensure dev mode: `import.meta.env.DEV === true`
-2. Check API server running: `http://localhost:4000`
-3. Verify file permissions in `storage/posts/`
+**Mid-term**
+- Full-text search (Algolia or local)
+- Newsletter subscription
+- RSS feed
+- Comment system (utterances or giscus)
 
-### Deployment fails
+**Long-term**
+- CMS backend (remote editing)
+- Multi-language support (i18n)
+- Image upload & optimization
+- Analytics dashboard
 
-1. Check GitHub Actions logs
-2. Verify CNAME file exists
-3. Ensure `gh-pages` branch created
-4. Check GitHub Pages settings (source: gh-pages branch)
+---
 
-## Resources & References
+## Out of Scope
 
-### Internal Documentation
+**Explicitly NOT Supported**:
+- User authentication & authorization
+- Multi-author support
+- Post versioning/revision history
+- E-commerce features
+- Social networking features
+- Real-time collaboration
 
-- [docs/kb/ARCHITECTURE.md](docs/kb/ARCHITECTURE.md) - Detailed architecture guide
-- [docs/MIGRATION_COMPLETE.md](docs/MIGRATION_COMPLETE.md) - Next.js → Vite migration notes
-- `docs/ideas/` - Feature proposals and ideas
-- `docs/specs/` - Technical specifications
-- `docs/plans/` - Implementation plans
+---
 
-### External References
+## References
 
-- [Hexagonal Architecture](https://alistair.cockburn.us/hexagonal-architecture) - Ports & Adapters pattern
-- [Screaming Architecture](https://blog.cleancoder.com/uncle-bob/2011/09/30/Screaming-Architecture.html) - Architecture philosophy
-- [Volatility-Based Decomposition](https://dmitripavlutin.com/frontend-architecture-stable-and-volatile-dependencies/) - Layer organization principle
+### Domain Documentation
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - Technical architecture details
+- [plans/20251012-002-plan-desktop-post-toc.md](../plans/20251012-002-plan-desktop-post-toc.md) - TOC implementation plan
 
-### Technology Documentation
-
-- [Vite](https://vitejs.dev/) - Build tool
-- [React Router](https://reactrouter.com/) - Routing
-- [TanStack Query](https://tanstack.com/query) - Server state management
-- [GitHub Pages](https://docs.github.com/en/pages) - Hosting
-
-## Contact & Contributing
-
-**Author**: Jake Park (@eatnug)
-**Email**: jake@thirdcommit.com
-**Website**: https://thirdcommit.com
-**Repository**: https://github.com/eatnug/thirdcommit.com
-
-This is a personal project, but feedback and suggestions are welcome!
+### Research
+- Eye-tracking studies (NN/g, ResearchGate) - TOC active section positioning
+- F-pattern reading behavior - Content layout optimization
 
 ---
 
 **Last Updated**: October 2025
-**Codebase Version**: Post-Vite migration, production-ready
+**Domain Version**: Blog v1.1 (with Desktop TOC)

@@ -8,7 +8,6 @@ export interface Post {
   published_at: Date | null
   description: string
   content: string
-  html: string
   readingTime: string
 }
 

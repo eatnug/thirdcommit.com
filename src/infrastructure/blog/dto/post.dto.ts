@@ -57,7 +57,6 @@ export function postDtoToDomain(dto: PostDto): Post {
     published_at: publishedAt,
     description: dto.frontmatter.description ?? "",
     content: dto.content,
-    html: dto.html,
     readingTime: dto.readingTime,
   };
 }

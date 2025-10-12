@@ -37,18 +37,15 @@ writeFileSync(
   JSON.stringify(publishedPosts, null, 2)
 );
 
-// Write individual post files with HTML
-await Promise.all(
-  publishedPosts.map(async post => {
-    const { marked } = await import('marked');
-    const html = await marked(posts.find(p => p.id === post.id).content || '');
+// Write individual post files with markdown
+publishedPosts.forEach(post => {
+  const fullPost = posts.find(p => p.id === post.id);
 
-    writeFileSync(
-      join(PUBLIC_DIR, `post-${post.slug}.json`),
-      JSON.stringify({ ...post, html }, null, 2)
-    );
-  })
-);
+  writeFileSync(
+    join(PUBLIC_DIR, `post-${post.slug}.json`),
+    JSON.stringify({ ...post, content: fullPost.content }, null, 2)
+  );
+});
 
 // Write projects data
 const projects = [

@@ -116,12 +116,8 @@ app.get('/api/posts/:idOrSlug', async (req, res) => {
       return res.status(404).json({ error: 'Post not found' });
     }
 
-    // Convert markdown to HTML
-    const html = await marked(post.content || '');
-
     res.json({
       ...post,
-      html,
       created_at: post.createdAt,
       updated_at: post.updatedAt,
     });
