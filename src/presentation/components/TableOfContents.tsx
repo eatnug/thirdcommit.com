@@ -7,7 +7,7 @@ interface TableOfContentsProps {
   postTitle: string
 }
 
-const TableOfContentsSkeleton: React.FC = () => {
+export const TableOfContentsSkeleton: React.FC = () => {
   return (
     <nav aria-label="Table of Contents" className="sticky top-[20px] w-[250px] max-h-[calc(100vh-40px)] overflow-y-auto p-4">
       <div className="space-y-3 animate-pulse">

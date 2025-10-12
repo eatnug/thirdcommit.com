@@ -5,7 +5,8 @@ import { createBlogApi } from '@/domain/blog';
 import { getPostRepository } from '@/infrastructure/blog/repositories/post.repository';
 import { markdownService } from '@/domain/blog/services/markdown.service';
 import { Header } from '@/presentation/layouts/Header';
-import { TableOfContents } from '@/presentation/components/TableOfContents';
+import { TableOfContents, TableOfContentsSkeleton } from '@/presentation/components/TableOfContents';
+import { ArticleSkeleton } from '@/presentation/components/ArticleSkeleton';
 
 const blogApi = createBlogApi(getPostRepository());
 
@@ -45,10 +46,31 @@ export function PostDetailPage() {
 
   if (isLoading) {
     return (
-      <div>
-        <div className="px-4 md:px-[400px] py-[20px]">
-          <Header />
-          <div>Loading...</div>
+      <div className="flex flex-col">
+        {/* Mobile header */}
+        <div className="md:hidden">
+          <Header variant="mobile-simple" />
+        </div>
+
+        {/* Desktop header */}
+        <div className="hidden md:flex justify-center px-4 py-[20px]">
+          <div className="w-full max-w-[700px]">
+            <Header />
+          </div>
+        </div>
+
+        {/* Skeleton content with ToC */}
+        <div className="flex justify-center gap-8 px-5 py-5">
+          {/* Left spacer (Desktop Only, ≥1280px) */}
+          <div className="hidden xl:block w-[250px] shrink-0" />
+
+          {/* Article Skeleton */}
+          <ArticleSkeleton />
+
+          {/* ToC Skeleton (Desktop Only, ≥1280px) */}
+          <aside className="hidden xl:block w-[250px] shrink-0">
+            <TableOfContentsSkeleton />
+          </aside>
         </div>
       </div>
     );
