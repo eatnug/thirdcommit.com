@@ -1,7 +1,7 @@
 import type { TocItem } from './TableOfContents.types'
 
 /**
- * Parses HTML content to extract Table of Contents structure
+ * Parses HTML content to extract Table of Contents structure using regex (faster than DOM parsing)
  *
  * @param htmlContent - HTML string containing heading elements
  * @param postTitle - Title of the post to add as first item
@@ -13,13 +13,6 @@ import type { TocItem } from './TableOfContents.types'
  */
 export function parseToc(htmlContent: string, postTitle: string): TocItem[] {
   try {
-    // Create temporary DOM element to parse HTML
-    const div = document.createElement('div')
-    div.innerHTML = htmlContent
-
-    // Query all h1, h2, h3 elements
-    const headings = div.querySelectorAll('h1, h2, h3')
-
     const items: TocItem[] = []
 
     // Add post title as first item
@@ -32,21 +25,19 @@ export function parseToc(htmlContent: string, postTitle: string): TocItem[] {
       })
     }
 
+    // Regex to match heading tags: <h1 id="heading-0">Text</h1>
+    // This is much faster than creating a DOM element and using innerHTML
+    const headingRegex = /<h([1-3])\s+id="([^"]+)">([^<]+)<\/h\1>/gi
+    let match: RegExpExecArray | null
+
     let currentH2: TocItem | null = null
 
-    headings.forEach((element) => {
-      const id = element.id
-      if (!id) {
-        console.warn('Heading element missing id attribute:', element.textContent)
-        return
-      }
+    while ((match = headingRegex.exec(htmlContent)) !== null) {
+      const level = parseInt(match[1]) as 1 | 2 | 3
+      const id = match[2]
+      const text = match[3].trim()
 
-      const text = element.textContent?.trim() || ''
-      if (!text) {
-        return // Skip empty headings
-      }
-
-      const level = parseInt(element.tagName[1]) as 1 | 2 | 3
+      if (!text || !id) continue
 
       const item: TocItem = {
         level,
@@ -70,7 +61,7 @@ export function parseToc(htmlContent: string, postTitle: string): TocItem[] {
         // h3 without parent h2, add as top-level
         items.push(item)
       }
-    })
+    }
 
     return items
   } catch (error) {

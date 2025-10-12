@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 import { parseToc } from './TableOfContents.utils'
 import { useActiveHeading } from './TableOfContents.hooks'
 
@@ -7,9 +7,46 @@ interface TableOfContentsProps {
   postTitle: string
 }
 
+const TableOfContentsSkeleton: React.FC = () => {
+  return (
+    <nav aria-label="Table of Contents" className="sticky top-[20px] w-[250px] max-h-[calc(100vh-40px)] overflow-y-auto p-4">
+      <div className="space-y-3 animate-pulse">
+        {/* Title skeleton */}
+        <div className="h-5 bg-gray-200 rounded w-3/4"></div>
+        {/* H2 skeletons */}
+        <div className="h-4 bg-gray-200 rounded w-full"></div>
+        <div className="space-y-2 pl-4">
+          {/* H3 skeletons */}
+          <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+          <div className="h-3 bg-gray-200 rounded w-4/5"></div>
+        </div>
+        <div className="h-4 bg-gray-200 rounded w-11/12"></div>
+        <div className="space-y-2 pl-4">
+          <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+        </div>
+        <div className="h-4 bg-gray-200 rounded w-10/12"></div>
+      </div>
+    </nav>
+  )
+}
+
 export const TableOfContents: React.FC<TableOfContentsProps> = ({ htmlContent, postTitle }) => {
+  const [isLoading, setIsLoading] = useState(true)
+
   // Parse ToC structure (memoized to avoid re-parsing on every render)
-  const tocItems = useMemo(() => parseToc(htmlContent, postTitle), [htmlContent, postTitle])
+  const tocItems = useMemo(() => {
+    if (!htmlContent) return []
+    return parseToc(htmlContent, postTitle)
+  }, [htmlContent, postTitle])
+
+  // Show skeleton for a brief moment while parsing
+  useEffect(() => {
+    if (htmlContent) {
+      // Small delay to show skeleton if parsing takes time
+      const timer = setTimeout(() => setIsLoading(false), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [htmlContent])
 
   // Extract all heading IDs for active tracking
   const allHeadingIds = useMemo(() => {
@@ -72,6 +109,11 @@ export const TableOfContents: React.FC<TableOfContentsProps> = ({ htmlContent, p
             : 'text-gray-500 hover:text-gray-700 hover:underline'
 
     return `${baseClasses} ${levelClasses} ${stateClasses}`
+  }
+
+  // Show skeleton while loading
+  if (isLoading || !htmlContent) {
+    return <TableOfContentsSkeleton />
   }
 
   // Empty state

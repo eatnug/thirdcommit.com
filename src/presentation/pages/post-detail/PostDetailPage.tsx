@@ -79,16 +79,10 @@ export function PostDetailPage() {
       </div>
 
       {/* Desktop header */}
-      <div className="hidden md:flex justify-center gap-8 px-5 py-[20px]">
-        {/* Left spacer (Desktop Only, ≥1280px) - same width as ToC for centering */}
-        {!isDraft && <div className="hidden xl:block w-[250px] shrink-0" />}
-
-        <div className="max-w-[700px] w-full">
+      <div className="hidden md:flex justify-center px-4 py-[20px]">
+        <div className="w-full max-w-[700px]">
           <Header />
         </div>
-
-        {/* Right spacer to match TOC */}
-        {!isDraft && <div className="hidden xl:block w-[250px] shrink-0" />}
       </div>
 
       {/* Post content with ToC */}
