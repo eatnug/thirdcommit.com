@@ -30,7 +30,7 @@ interface HeaderProps {
 export function Header({ variant = 'desktop' }: HeaderProps) {
   if (variant === 'mobile-simple') {
     return (
-      <header className="flex h-[80px] px-5 items-center justify-between">
+      <header className="flex h-[80px] px-[16px] items-center justify-between">
         <div className="flex items-center gap-[10px]">
           <Link to="/" className="text-[25px] font-normal font-['Gothic_A1'] text-black leading-none">
             Jake Park
