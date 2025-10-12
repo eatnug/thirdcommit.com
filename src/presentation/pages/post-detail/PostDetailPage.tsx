@@ -35,18 +35,22 @@ export function PostDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="px-4 md:px-[400px] py-[20px]">
-        <Header />
-        <div>Loading...</div>
+      <div>
+        <div className="px-4 md:px-[400px] py-[20px]">
+          <Header />
+          <div>Loading...</div>
+        </div>
       </div>
     );
   }
 
   if (!post) {
     return (
-      <div className="px-4 md:px-[400px] py-[20px]">
-        <Header />
-        <div>Post not found</div>
+      <div>
+        <div className="px-4 md:px-[400px] py-[20px]">
+          <Header />
+          <div>Post not found</div>
+        </div>
       </div>
     );
   }
@@ -58,16 +62,28 @@ export function PostDetailPage() {
     : post.html;
 
   return (
-    <div className="px-4 md:px-[400px] py-[20px] flex flex-col gap-[20px]">
-      <Header />
-      <article className="prose prose-lg max-w-none">
-        <h1>{post.title}</h1>
-        <div className="flex items-center gap-2 text-sm text-gray-500 not-prose">
-          <time>{new Date(post.created_at).toLocaleDateString()}</time>
-          {post.readingTime && <span>· {post.readingTime}</span>}
-        </div>
-        <div dangerouslySetInnerHTML={{ __html: displayContent }} />
-      </article>
+    <div className="flex flex-col">
+      {/* Mobile header */}
+      <div className="md:hidden">
+        <Header variant="mobile-simple" />
+      </div>
+
+      {/* Desktop header */}
+      <div className="hidden md:block px-4 md:px-[400px] py-[20px]">
+        <Header />
+      </div>
+
+      {/* Post content */}
+      <div className="px-5 md:px-[400px] py-5 md:py-0 flex flex-col gap-[20px]">
+        <article className="prose prose-lg max-w-none">
+          <h1>{post.title}</h1>
+          <div className="flex items-center gap-2 text-sm text-gray-500 not-prose">
+            <time>{new Date(post.created_at).toLocaleDateString()}</time>
+            {post.readingTime && <span>· {post.readingTime}</span>}
+          </div>
+          <div dangerouslySetInnerHTML={{ __html: displayContent }} />
+        </article>
+      </div>
     </div>
   );
 }
