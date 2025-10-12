@@ -33,7 +33,7 @@ export function HomePage() {
 
   return (
     <div className="px-4 py-[20px] flex flex-col gap-[20px] items-center">
-      <div className="w-full max-w-[700px]">
+      <div className="w-full max-w-[700px] flex flex-col gap-[40px]">
         <Header />
         <TabsUI posts={posts} projects={projects} />
       </div>
