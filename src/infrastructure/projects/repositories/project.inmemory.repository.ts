@@ -10,6 +10,12 @@ export class InMemoryProjectRepository implements IProjectRepository {
         externalLink: "mailto:jake@thirdcommit.com",
       },
       {
+        title: "Melon Musk",
+        description:
+          "Personal todo management with time boxing. Daily sheets with priority tasks, time blocks, and brain dumps. Built with React, NestJS, and PostgreSQL.",
+        externalLink: "https://melon-musk.thirdcommit.com",
+      },
+      {
         title: "My Feed (WIP)",
         description:
           "Fully customizable feed: add any source you follow (YouTube channels, Instagram accounts, blogs) and read everything without distractions.",
