@@ -20,6 +20,10 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    watch: {
+      // Ignore storage directory to prevent HMR on file writes
+      ignored: ['**/storage/**'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
@@ -27,4 +31,5 @@ export default defineConfig({
       },
     },
   },
+  logLevel: 'info', // Enable detailed logging
 });
