@@ -1,4 +1,4 @@
-import type { Project } from '../entities/project.entity'
+import type { Project } from '../entities/project.entity';
 
 /**
  * Port (interface) for project repository
@@ -13,5 +13,5 @@ export interface IProjectRepository {
   /**
    * Retrieve all projects from the data source
    */
-  getProjects(): Promise<Project[]>
+  getProjects(): Promise<Project[]>;
 }

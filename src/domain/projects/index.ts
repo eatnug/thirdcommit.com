@@ -13,18 +13,18 @@
 // ============================================================================
 // ENTITIES (TIER 3 - STABLE)
 // ============================================================================
-export type { Project } from './entities/project.entity'
+export type { Project } from './entities/project.entity';
 
 // ============================================================================
 // USE CASES (TIER 3 - STABLE)
 // ============================================================================
-export { getProjectsUseCase } from './use-cases/get-projects.use-case'
+export { getProjectsUseCase } from './use-cases/get-projects.use-case';
 
 // ============================================================================
 // PORTS (TIER 3 - STABLE)
 // For dependency injection in tests
 // ============================================================================
-export type { IProjectRepository } from './ports/project-repository.port'
+export type { IProjectRepository } from './ports/project-repository.port';
 
 // ============================================================================
 // REPOSITORY EXPORTS (IOC Container)
@@ -35,8 +35,8 @@ export type { IProjectRepository } from './ports/project-repository.port'
 // ============================================================================
 // CONVENIENCE API (Server-side only)
 // ============================================================================
-import type { IProjectRepository } from './ports/project-repository.port'
-import { getProjectsUseCase } from './use-cases/get-projects.use-case'
+import type { IProjectRepository } from './ports/project-repository.port';
+import { getProjectsUseCase } from './use-cases/get-projects.use-case';
 
 /**
  * Projects API Factory
@@ -60,5 +60,5 @@ import { getProjectsUseCase } from './use-cases/get-projects.use-case'
 export function createProjectsApi(repository: IProjectRepository) {
   return {
     getProjects: () => getProjectsUseCase(repository),
-  }
+  };
 }

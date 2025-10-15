@@ -1,4 +1,4 @@
-import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
+import type { IPostRepository } from '@/domain/blog/ports/post-repository.port';
 
 /**
  * Use case for deleting a post
@@ -12,9 +12,9 @@ export async function deletePostUseCase(
   id: string,
   repository: IPostRepository
 ): Promise<void> {
-  const post = await repository.getPostById(id)
+  const post = await repository.getPostById(id);
   if (!post) {
-    throw new Error('Post not found')
+    throw new Error('Post not found');
   }
-  return repository.deletePost(post.title)
+  return repository.deletePost(post.title);
 }

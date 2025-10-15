@@ -14,7 +14,8 @@ export function MarkdownEditor({ content, onChange }: MarkdownEditorProps) {
       const start = target.selectionStart;
       const end = target.selectionEnd;
 
-      const newValue = content.substring(0, start) + '  ' + content.substring(end);
+      const newValue =
+        content.substring(0, start) + '  ' + content.substring(end);
       onChange(newValue);
 
       // Set cursor position after the inserted spaces

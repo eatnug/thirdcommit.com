@@ -1,4 +1,4 @@
-import type { TocItem } from './TableOfContents.types'
+import type { TocItem } from './TableOfContents.types';
 
 /**
  * Parses HTML content to extract Table of Contents structure using regex (faster than DOM parsing)
@@ -13,7 +13,7 @@ import type { TocItem } from './TableOfContents.types'
  */
 export function parseToc(htmlContent: string, postTitle: string): TocItem[] {
   try {
-    const items: TocItem[] = []
+    const items: TocItem[] = [];
 
     // Add post title as first item
     if (postTitle) {
@@ -21,51 +21,51 @@ export function parseToc(htmlContent: string, postTitle: string): TocItem[] {
         level: 0 as any,
         text: postTitle,
         id: 'title',
-        children: []
-      })
+        children: [],
+      });
     }
 
     // Regex to match heading tags: <h1 id="heading-0">Text</h1>
     // This is much faster than creating a DOM element and using innerHTML
-    const headingRegex = /<h([1-3])\s+id="([^"]+)">([^<]+)<\/h\1>/gi
-    let match: RegExpExecArray | null
+    const headingRegex = /<h([1-3])\s+id="([^"]+)">([^<]+)<\/h\1>/gi;
+    let match: RegExpExecArray | null;
 
-    let currentH2: TocItem | null = null
+    let currentH2: TocItem | null = null;
 
     while ((match = headingRegex.exec(htmlContent)) !== null) {
-      const level = parseInt(match[1]) as 1 | 2 | 3
-      const id = match[2]
-      const text = match[3].trim()
+      const level = parseInt(match[1]) as 1 | 2 | 3;
+      const id = match[2];
+      const text = match[3].trim();
 
-      if (!text || !id) continue
+      if (!text || !id) continue;
 
       const item: TocItem = {
         level,
         text,
         id,
-        children: []
-      }
+        children: [],
+      };
 
       if (level === 1 || level === 2) {
         // Top-level items
-        items.push(item)
+        items.push(item);
         if (level === 2) {
-          currentH2 = item
+          currentH2 = item;
         } else {
-          currentH2 = null
+          currentH2 = null;
         }
       } else if (level === 3 && currentH2) {
         // Nest h3 under parent h2
-        currentH2.children?.push(item)
+        currentH2.children?.push(item);
       } else if (level === 3) {
         // h3 without parent h2, add as top-level
-        items.push(item)
+        items.push(item);
       }
     }
 
-    return items
+    return items;
   } catch (error) {
-    console.error('Error parsing ToC:', error)
-    return []
+    console.error('Error parsing ToC:', error);
+    return [];
   }
 }

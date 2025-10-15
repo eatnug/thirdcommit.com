@@ -5,7 +5,10 @@ import { createBlogApi } from '@/domain/blog';
 import { getPostRepository } from '@/infrastructure/blog/repositories/post.repository';
 import { markdownService } from '@/domain/blog/services/markdown.service';
 import { Header } from '@/presentation/layouts/Header';
-import { TableOfContents, TableOfContentsSkeleton } from '@/presentation/components/TableOfContents';
+import {
+  TableOfContents,
+  TableOfContentsSkeleton,
+} from '@/presentation/components/TableOfContents';
 import { ArticleSkeleton } from '@/presentation/components/ArticleSkeleton';
 
 const blogApi = createBlogApi(getPostRepository());
@@ -23,7 +26,11 @@ export function PostDetailPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const { data: post, isLoading, isError } = useQuery({
+  const {
+    data: post,
+    isLoading,
+    isError,
+  } = useQuery({
     queryKey: ['post', slug],
     queryFn: () => blogApi.getPost(slug!),
     enabled: !!slug,
@@ -109,7 +116,9 @@ export function PostDetailPage() {
         {!isDraft && <div className="hidden xl:block w-[250px] shrink-0" />}
 
         <article className="prose prose-lg max-w-[700px] w-full [&_h2]:text-[1.375rem] [&_h2]:mt-6 [&_h2]:mb-3 md:[&_h2]:text-[1.5rem] md:[&_h2]:mt-8 md:[&_h2]:mb-4">
-          <h1 id="title" className="!text-2xl md:!text-3xl">{post.title}</h1>
+          <h1 id="title" className="!text-2xl md:!text-3xl">
+            {post.title}
+          </h1>
           <div className="flex items-center gap-2 text-sm text-gray-500 not-prose">
             <time>{new Date(post.created_at).toLocaleDateString()}</time>
             {post.readingTime && <span>· {post.readingTime}</span>}
@@ -119,7 +128,10 @@ export function PostDetailPage() {
 
         {!isDraft && (
           <aside className="hidden xl:block w-[250px] shrink-0">
-            <TableOfContents htmlContent={displayContent} postTitle={post.title} />
+            <TableOfContents
+              htmlContent={displayContent}
+              postTitle={post.title}
+            />
           </aside>
         )}
       </div>

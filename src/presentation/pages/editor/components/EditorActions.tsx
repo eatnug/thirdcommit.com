@@ -23,10 +23,7 @@ export function EditorActions({
 }: EditorActionsProps) {
   return (
     <div className="flex items-center gap-3">
-      <button
-        onClick={onNew}
-        className="text-[15px] underline"
-      >
+      <button onClick={onNew} className="text-[15px] underline">
         New
       </button>
 
@@ -49,17 +46,12 @@ export function EditorActions({
       )}
 
       {!isNewPost && (
-        <button
-          onClick={onDelete}
-          className="text-[15px] underline"
-        >
+        <button onClick={onDelete} className="text-[15px] underline">
           Delete
         </button>
       )}
 
-      {status === 'published' && (
-        <span className="text-[15px]">Published</span>
-      )}
+      {status === 'published' && <span className="text-[15px]">Published</span>}
     </div>
   );
 }

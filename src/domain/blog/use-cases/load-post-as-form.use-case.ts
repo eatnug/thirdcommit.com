@@ -1,5 +1,5 @@
-import type { PostFormData } from '@/domain/blog/entities/post.entity'
-import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
+import type { PostFormData } from '@/domain/blog/entities/post.entity';
+import type { IPostRepository } from '@/domain/blog/ports/post-repository.port';
 
 /**
  * Use case for loading a post as form data
@@ -13,10 +13,10 @@ export async function loadPostAsFormUseCase(
   id: string,
   repository: IPostRepository
 ): Promise<PostFormData | null> {
-  const post = await repository.getPostById(id)
+  const post = await repository.getPostById(id);
 
   if (!post) {
-    return null
+    return null;
   }
 
   return {
@@ -25,5 +25,5 @@ export async function loadPostAsFormUseCase(
     description: post.description || '',
     content: post.content,
     status: post.status,
-  }
+  };
 }

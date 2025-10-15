@@ -1,4 +1,4 @@
-import type { Post } from "@/domain/blog/entities/post.entity";
+import type { Post } from '@/domain/blog/entities/post.entity';
 
 export interface PostDto {
   frontmatter: {
@@ -55,7 +55,7 @@ export function postDtoToDomain(dto: PostDto): Post {
     created_at: createdAt,
     updated_at: updatedAt,
     published_at: publishedAt,
-    description: dto.frontmatter.description ?? "",
+    description: dto.frontmatter.description ?? '',
     content: dto.content,
     readingTime: dto.readingTime,
   };

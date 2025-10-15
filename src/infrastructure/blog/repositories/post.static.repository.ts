@@ -7,7 +7,9 @@ export class StaticPostRepository implements IPostRepository {
     const url = import.meta.env.DEV ? '/api/posts' : '/posts.json';
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error(`Failed to fetch posts: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `Failed to fetch posts: ${response.status} ${response.statusText}`
+      );
     }
     return response.json();
   }

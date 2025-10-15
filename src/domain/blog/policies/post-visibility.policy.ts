@@ -1,4 +1,4 @@
-import type { Post } from '@/domain/blog/entities/post.entity'
+import type { Post } from '@/domain/blog/entities/post.entity';
 
 /**
  * Business policies for post visibility
@@ -21,7 +21,7 @@ export class PostVisibilityPolicy {
    * @param post - The post to evaluate
    */
   static shouldShowInPublicList(_post: Post): boolean {
-    return true
+    return true;
   }
 
   /**
@@ -40,24 +40,24 @@ export class PostVisibilityPolicy {
   ): boolean {
     // Published posts are accessible to everyone
     if (post.status === 'published') {
-      return true
+      return true;
     }
 
     // Draft posts require authentication
     if (!user) {
-      return false
+      return false;
     }
 
     // Admins can see all drafts
     if (user.role === 'admin') {
-      return true
+      return true;
     }
 
     // Note: This is a placeholder - you'd need to add authorId to Post entity
     // to implement proper author-only access
     // return user.id === post.authorId
 
-    return false
+    return false;
   }
 
   /**
@@ -69,7 +69,7 @@ export class PostVisibilityPolicy {
    * @param post - The post to evaluate
    */
   static shouldIndexForSEO(post: Post): boolean {
-    return post.status === 'published'
+    return post.status === 'published';
   }
 
   /**
@@ -84,12 +84,14 @@ export class PostVisibilityPolicy {
   ): Post[] {
     return posts.filter((post) => {
       // For public lists, use public visibility rules
-      const isPubliclyVisible = this.shouldShowInPublicList(post)
+      const isPubliclyVisible = this.shouldShowInPublicList(post);
 
       // For authenticated users, use access rules
-      const isAccessible = user ? this.canUserAccess(post, user) : isPubliclyVisible
+      const isAccessible = user
+        ? this.canUserAccess(post, user)
+        : isPubliclyVisible;
 
-      return isAccessible
-    })
+      return isAccessible;
+    });
   }
 }

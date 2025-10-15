@@ -1,12 +1,12 @@
-import type { Post } from '@/domain/blog/entities/post.entity'
-import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
+import type { Post } from '@/domain/blog/entities/post.entity';
+import type { IPostRepository } from '@/domain/blog/ports/post-repository.port';
 
 export interface SavePostInput {
-  id?: string
-  title: string
-  description: string
-  content: string
-  status: 'draft' | 'published'
+  id?: string;
+  title: string;
+  description: string;
+  content: string;
+  status: 'draft' | 'published';
 }
 
 /**
@@ -20,15 +20,25 @@ export interface SavePostInput {
 export async function savePostUseCase(
   input: SavePostInput,
   repository: IPostRepository
-): Promise<Post | { id: string; slug: string; title: string; status: 'draft' | 'published'; filename: string; path: string }> {
+): Promise<
+  | Post
+  | {
+      id: string;
+      slug: string;
+      title: string;
+      status: 'draft' | 'published';
+      filename: string;
+      path: string;
+    }
+> {
   if (input.id) {
     // UPDATE existing post
     const updatedPost = await repository.updatePost(input.id, {
       title: input.title,
       description: input.description,
       content: input.content,
-    })
-    return updatedPost
+    });
+    return updatedPost;
   } else {
     // CREATE new post
     const result = await repository.createPost({
@@ -36,7 +46,7 @@ export async function savePostUseCase(
       description: input.description,
       content: input.content,
       status: input.status,
-    })
-    return result
+    });
+    return result;
   }
 }

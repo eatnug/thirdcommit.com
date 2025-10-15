@@ -1,5 +1,5 @@
 export interface Project {
-  title: string
-  description: string
-  externalLink?: string
+  title: string;
+  description: string;
+  externalLink?: string;
 }

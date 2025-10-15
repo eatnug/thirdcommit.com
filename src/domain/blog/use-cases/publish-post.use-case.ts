@@ -1,5 +1,5 @@
-import type { Post } from '@/domain/blog/entities/post.entity'
-import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
+import type { Post } from '@/domain/blog/entities/post.entity';
+import type { IPostRepository } from '@/domain/blog/ports/post-repository.port';
 
 /**
  * Use case for publishing a draft post
@@ -14,20 +14,20 @@ export async function publishPostUseCase(
   id: string,
   repository: IPostRepository
 ): Promise<Post> {
-  const post = await repository.getPostById(id)
+  const post = await repository.getPostById(id);
   if (!post) {
-    throw new Error('Post not found')
+    throw new Error('Post not found');
   }
 
   if (post.status === 'published') {
-    throw new Error('Post is already published')
+    throw new Error('Post is already published');
   }
 
-  const now = new Date()
+  const now = new Date();
   const updatedPost = await repository.updatePost(id, {
     status: 'published',
     published_at: post.published_at || now,
-  })
+  });
 
-  return updatedPost
+  return updatedPost;
 }

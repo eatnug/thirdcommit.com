@@ -1,4 +1,4 @@
-import type { Post } from '@/domain/blog/entities/post.entity'
+import type { Post } from '@/domain/blog/entities/post.entity';
 
 /**
  * Port (interface) for post repository
@@ -13,39 +13,39 @@ export interface IPostRepository {
   /**
    * Retrieve all posts from the data source
    */
-  getPosts(): Promise<Post[]>
+  getPosts(): Promise<Post[]>;
 
   /**
    * Retrieve a single post by its ID (ULID)
    */
-  getPostById(id: string): Promise<Post | null>
+  getPostById(id: string): Promise<Post | null>;
 
   /**
    * Retrieve a single post by its title
    */
-  getPostByTitle(title: string): Promise<Post | null>
+  getPostByTitle(title: string): Promise<Post | null>;
 
   /**
    * Retrieve a single post by its slug
    */
-  getPostBySlug(slug: string): Promise<Post | null>
+  getPostBySlug(slug: string): Promise<Post | null>;
 
   /**
    * Create a new post
    */
   createPost(data: {
-    title: string
-    description?: string
-    content: string
-    status: 'draft' | 'published'
+    title: string;
+    description?: string;
+    content: string;
+    status: 'draft' | 'published';
   }): Promise<{
-    id: string
-    slug: string
-    title: string
-    status: 'draft' | 'published'
-    filename: string
-    path: string
-  }>
+    id: string;
+    slug: string;
+    title: string;
+    status: 'draft' | 'published';
+    filename: string;
+    path: string;
+  }>;
 
   /**
    * Update an existing post
@@ -53,16 +53,16 @@ export interface IPostRepository {
   updatePost(
     id: string,
     data: Partial<{
-      title: string
-      description: string
-      content: string
-      status: 'draft' | 'published'
-      published_at: Date | null
+      title: string;
+      description: string;
+      content: string;
+      status: 'draft' | 'published';
+      published_at: Date | null;
     }>
-  ): Promise<Post>
+  ): Promise<Post>;
 
   /**
    * Delete a post by its title
    */
-  deletePost(title: string): Promise<void>
+  deletePost(title: string): Promise<void>;
 }

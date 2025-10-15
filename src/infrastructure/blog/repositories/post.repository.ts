@@ -1,5 +1,5 @@
-import type { IPostRepository } from '@/domain/blog/ports/post-repository.port'
-import { StaticPostRepository } from './post.static.repository'
+import type { IPostRepository } from '@/domain/blog/ports/post-repository.port';
+import { StaticPostRepository } from './post.static.repository';
 
 /**
  * IOC Container for Post Repository
@@ -9,11 +9,11 @@ import { StaticPostRepository } from './post.static.repository'
  * - PROD: StaticPostRepository with static JSON
  */
 
-let instance: IPostRepository | null = null
+let instance: IPostRepository | null = null;
 
 export function getPostRepository(): IPostRepository {
   if (!instance) {
-    instance = new StaticPostRepository()
+    instance = new StaticPostRepository();
   }
-  return instance
+  return instance;
 }

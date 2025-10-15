@@ -1,6 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import { readFileSync, writeFileSync, readdirSync, unlinkSync, existsSync } from 'fs';
+import {
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  unlinkSync,
+  existsSync,
+} from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import matter from 'gray-matter';
@@ -18,8 +24,8 @@ const POSTS_DIR = join(__dirname, '../storage/posts');
 
 // Helper: Read all post files
 function readAllPosts() {
-  const files = readdirSync(POSTS_DIR).filter(f => f.endsWith('.md'));
-  return files.map(filename => {
+  const files = readdirSync(POSTS_DIR).filter((f) => f.endsWith('.md'));
+  return files.map((filename) => {
     const filepath = join(POSTS_DIR, filename);
     const fileContent = readFileSync(filepath, 'utf-8');
     const { data, content } = matter(fileContent);
@@ -39,12 +45,21 @@ function readAllPosts() {
 // Helper: Read single post
 function readPost(id) {
   const posts = readAllPosts();
-  return posts.find(p => p.id === id);
+  return posts.find((p) => p.id === id);
 }
 
 // Helper: Write post to file
 function writePost(postData) {
-  const { id, slug, title, description, status, createdAt, updatedAt, content } = postData;
+  const {
+    id,
+    slug,
+    title,
+    description,
+    status,
+    createdAt,
+    updatedAt,
+    content,
+  } = postData;
   const filename = `${slug || id}.md`;
   const filepath = join(POSTS_DIR, filename);
 
@@ -60,7 +75,7 @@ function writePost(postData) {
   };
 
   // Remove undefined/null values
-  Object.keys(frontmatter).forEach(key => {
+  Object.keys(frontmatter).forEach((key) => {
     if (frontmatter[key] === undefined || frontmatter[key] === null) {
       delete frontmatter[key];
     }
@@ -75,7 +90,7 @@ function writePost(postData) {
 // Helper: Delete post file
 function deletePostFile(id) {
   const posts = readAllPosts();
-  const post = posts.find(p => p.id === id);
+  const post = posts.find((p) => p.id === id);
   if (!post) return false;
 
   const filename = `${post.slug || post.id}.md`;
@@ -91,7 +106,7 @@ function deletePostFile(id) {
 // GET /api/posts - 모든 포스트 (drafts 포함)
 app.get('/api/posts', (req, res) => {
   try {
-    const posts = readAllPosts().map(post => ({
+    const posts = readAllPosts().map((post) => ({
       ...post,
       created_at: post.createdAt,
       updated_at: post.updatedAt,
@@ -110,7 +125,7 @@ app.get('/api/posts/:idOrSlug', async (req, res) => {
     const posts = readAllPosts();
 
     // id 또는 slug로 찾기
-    const post = posts.find(p => p.id === idOrSlug || p.slug === idOrSlug);
+    const post = posts.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
 
     if (!post) {
       return res.status(404).json({ error: 'Post not found' });
@@ -175,7 +190,8 @@ app.put('/api/posts/:id', (req, res) => {
     const updatedPost = {
       ...existingPost,
       title: title || existingPost.title,
-      description: description !== undefined ? description : existingPost.description,
+      description:
+        description !== undefined ? description : existingPost.description,
       content: content !== undefined ? content : existingPost.content,
       status: status || existingPost.status,
       updatedAt: new Date().toISOString(),

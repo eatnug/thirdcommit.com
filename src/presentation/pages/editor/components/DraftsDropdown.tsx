@@ -12,7 +12,11 @@ interface DraftsDropdownProps {
   currentDraftId?: string;
 }
 
-export function DraftsDropdown({ drafts, onLoad, currentDraftId }: DraftsDropdownProps) {
+export function DraftsDropdown({
+  drafts,
+  onLoad,
+  currentDraftId,
+}: DraftsDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -23,7 +27,10 @@ export function DraftsDropdown({ drafts, onLoad, currentDraftId }: DraftsDropdow
         title="Load Draft"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-          <path d="M14 2H6C4.9 2 4 2.9 4 4V16C4 17.1 4.9 18 6 18H14C15.1 18 16 17.1 16 16V4C16 2.9 15.1 2 14 2ZM12 12H8V10H12V12ZM14 8H6V6H14V8Z" fill="black"/>
+          <path
+            d="M14 2H6C4.9 2 4 2.9 4 4V16C4 17.1 4.9 18 6 18H14C15.1 18 16 17.1 16 16V4C16 2.9 15.1 2 14 2ZM12 12H8V10H12V12ZM14 8H6V6H14V8Z"
+            fill="black"
+          />
         </svg>
       </button>
 
@@ -44,7 +51,9 @@ export function DraftsDropdown({ drafts, onLoad, currentDraftId }: DraftsDropdow
                     draft.id === currentDraftId ? 'bg-gray-100' : ''
                   }`}
                 >
-                  <div className="text-[15px] truncate">{draft.title || 'Untitled'}</div>
+                  <div className="text-[15px] truncate">
+                    {draft.title || 'Untitled'}
+                  </div>
                   <div className="text-[13px] text-gray-500 mt-1">
                     {draft.status === 'published' ? 'Published' : 'Draft'}
                   </div>
@@ -56,10 +65,7 @@ export function DraftsDropdown({ drafts, onLoad, currentDraftId }: DraftsDropdow
       )}
 
       {isOpen && (
-        <div
-          className="fixed inset-0 z-0"
-          onClick={() => setIsOpen(false)}
-        />
+        <div className="fixed inset-0 z-0" onClick={() => setIsOpen(false)} />
       )}
     </div>
   );

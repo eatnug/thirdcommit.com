@@ -7,7 +7,9 @@ const BASE_URL = 'http://localhost:4173'; // Vite preview server
 
 async function generateStaticSite() {
   // Read posts data
-  const postsData = JSON.parse(readFileSync(join(DIST_DIR, 'posts.json'), 'utf-8'));
+  const postsData = JSON.parse(
+    readFileSync(join(DIST_DIR, 'posts.json'), 'utf-8')
+  );
 
   console.log(`Starting static generation for ${postsData.length} posts...`);
 
@@ -18,8 +20,8 @@ async function generateStaticSite() {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-gpu'
-    ]
+      '--disable-gpu',
+    ],
   });
   const page = await browser.newPage();
 

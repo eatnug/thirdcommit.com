@@ -10,7 +10,8 @@ export function useKeyboardShortcut(
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const modifierKey = isMac ? e.metaKey : e.ctrlKey;
 
-      const matchesModifier = options.metaKey || options.ctrlKey ? modifierKey : true;
+      const matchesModifier =
+        options.metaKey || options.ctrlKey ? modifierKey : true;
       const matchesKey = e.key.toLowerCase() === key.toLowerCase();
 
       if (matchesKey && matchesModifier) {

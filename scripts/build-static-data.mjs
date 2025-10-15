@@ -6,9 +6,9 @@ const POSTS_DIR = 'storage/posts';
 const PUBLIC_DIR = 'public';
 
 // Read all posts
-const files = readdirSync(POSTS_DIR).filter(file => file.endsWith('.md'));
+const files = readdirSync(POSTS_DIR).filter((file) => file.endsWith('.md'));
 
-const posts = files.map(file => {
+const posts = files.map((file) => {
   const filepath = join(POSTS_DIR, file);
   const fileContent = readFileSync(filepath, 'utf-8');
   const { data, content } = matter(fileContent);
@@ -28,7 +28,7 @@ const posts = files.map(file => {
 
 // Filter published posts
 const publishedPosts = posts
-  .filter(post => post.status === 'published')
+  .filter((post) => post.status === 'published')
   .map(({ content, ...post }) => post);
 
 // Write posts list
@@ -38,8 +38,8 @@ writeFileSync(
 );
 
 // Write individual post files with markdown
-publishedPosts.forEach(post => {
-  const fullPost = posts.find(p => p.id === post.id);
+publishedPosts.forEach((post) => {
+  const fullPost = posts.find((p) => p.id === post.id);
 
   writeFileSync(
     join(PUBLIC_DIR, `post-${post.slug}.json`),
@@ -50,26 +50,26 @@ publishedPosts.forEach(post => {
 // Write projects data
 const projects = [
   {
-    title: "What should I build next?",
-    description: "Send me an idea.",
-    externalLink: "mailto:jake@thirdcommit.com",
+    title: 'What should I build next?',
+    description: 'Send me an idea.',
+    externalLink: 'mailto:jake@thirdcommit.com',
   },
   {
-    title: "My Feed (WIP)",
+    title: 'My Feed (WIP)',
     description:
-      "Fully customizable feed: add any source you follow (YouTube channels, Instagram accounts, blogs) and read everything without distractions.",
+      'Fully customizable feed: add any source you follow (YouTube channels, Instagram accounts, blogs) and read everything without distractions.',
   },
   {
-    title: "The Terminal X",
+    title: 'The Terminal X',
     description:
-      "AI research agent for finance professionals. Retrieves news, analyzes market signals, and answers questions",
-    externalLink: "https://theterminalx.com/",
+      'AI research agent for finance professionals. Retrieves news, analyzes market signals, and answers questions',
+    externalLink: 'https://theterminalx.com/',
   },
   {
-    title: "DoctorNow",
+    title: 'DoctorNow',
     description:
       "South Korea's leading telemedicine app, enabling 24/7 remote doctor consultations and prescription services.",
-    externalLink: "https://www.doctornow.co.kr/",
+    externalLink: 'https://www.doctornow.co.kr/',
   },
 ];
 
@@ -78,4 +78,6 @@ writeFileSync(
   JSON.stringify(projects, null, 2)
 );
 
-console.log(`✓ Generated ${publishedPosts.length} posts and ${projects.length} projects`);
+console.log(
+  `✓ Generated ${publishedPosts.length} posts and ${projects.length} projects`
+);

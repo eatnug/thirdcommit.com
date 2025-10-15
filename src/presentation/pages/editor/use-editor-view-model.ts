@@ -44,7 +44,10 @@ async function createPost(data: Partial<PostFormData>): Promise<Post> {
   return res.json();
 }
 
-async function updatePost(id: string, data: Partial<PostFormData>): Promise<Post> {
+async function updatePost(
+  id: string,
+  data: Partial<PostFormData>
+): Promise<Post> {
   const res = await fetch(`${API_BASE}/posts/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -153,8 +156,8 @@ export function useEditorViewModel() {
     } else {
       setHasChanges(
         title !== currentPost.title ||
-        description !== currentPost.description ||
-        content !== currentPost.content
+          description !== currentPost.description ||
+          content !== currentPost.content
       );
     }
   }, [title, description, content, currentPost]);
