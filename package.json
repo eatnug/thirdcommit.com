@@ -11,7 +11,8 @@
     "generate:html": "vite preview --port 4173 & sleep 5 && node scripts/generate-static-html.mjs && lsof -ti:4173 | xargs kill 2>/dev/null",
     "deploy": "npm run build && touch dist/.nojekyll && cp public/CNAME dist/CNAME",
     "preview": "vite preview",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@radix-ui/react-separator": "^1.1.7",
@@ -45,7 +46,10 @@
     "cors": "^2.8.5",
     "eslint": "^9",
     "express": "^4.21.2",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.4",
     "marked": "^16.4.0",
+    "prettier": "^3.6.2",
     "puppeteer": "^24.23.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
@@ -54,5 +58,11 @@
     "typescript-eslint": "^8.45.0",
     "ulid": "^3.0.1",
     "vite": "^6.0.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,mjs}": [
+      "prettier --write",
+      "eslint --fix"
+    ]
   }
 }
