@@ -1,76 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { ApiPostRepository } from '@/infrastructure/blog/repositories/post.api.repository';
 
-interface Post {
-  id: string;
-  slug: string;
-  title: string;
-  description: string;
-  status: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PostFormData {
-  title: string;
-  description: string;
-  content: string;
-  status: string;
-}
-
-const API_BASE = '/api';
-
-// API functions
-async function fetchPosts(): Promise<Post[]> {
-  const res = await fetch(`${API_BASE}/posts`);
-  if (!res.ok) throw new Error('Failed to fetch posts');
-  return res.json();
-}
-
-async function fetchPost(id: string): Promise<Post> {
-  const res = await fetch(`${API_BASE}/posts/${id}`);
-  if (!res.ok) throw new Error('Failed to fetch post');
-  return res.json();
-}
-
-async function createPost(data: Partial<PostFormData>): Promise<Post> {
-  const res = await fetch(`${API_BASE}/posts`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error('Failed to create post');
-  return res.json();
-}
-
-async function updatePost(
-  id: string,
-  data: Partial<PostFormData>
-): Promise<Post> {
-  const res = await fetch(`${API_BASE}/posts/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error('Failed to update post');
-  return res.json();
-}
-
-async function deletePost(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE}/posts/${id}`, {
-    method: 'DELETE',
-  });
-  if (!res.ok) throw new Error('Failed to delete post');
-}
-
-async function publishPost(id: string): Promise<Post> {
-  const res = await fetch(`${API_BASE}/posts/${id}/publish`, {
-    method: 'PUT',
-  });
-  if (!res.ok) throw new Error('Failed to publish post');
-  return res.json();
-}
+const postRepository = new ApiPostRepository();
 
 export function useEditorViewModel() {
   const queryClient = useQueryClient();
@@ -80,26 +12,31 @@ export function useEditorViewModel() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [content, setContent] = useState('');
-  const [status, setStatus] = useState('draft');
+  const [status, setStatus] = useState<'draft' | 'published'>('draft');
   const [hasChanges, setHasChanges] = useState(false);
 
   // Queries
   const { data: drafts = [] } = useQuery({
     queryKey: ['editor-posts'],
-    queryFn: fetchPosts,
+    queryFn: () => postRepository.getPosts(),
     staleTime: 0,
     refetchOnMount: true,
   });
 
   const { data: currentPost } = useQuery({
     queryKey: ['post', currentPostId],
-    queryFn: () => fetchPost(currentPostId!),
+    queryFn: () => postRepository.getPostById(currentPostId!),
     enabled: !!currentPostId,
   });
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: createPost,
+    mutationFn: (data: {
+      title: string;
+      description?: string;
+      content: string;
+      status: 'draft' | 'published';
+    }) => postRepository.createPost(data),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['editor-posts'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -109,8 +46,18 @@ export function useEditorViewModel() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<PostFormData> }) =>
-      updatePost(id, data),
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Partial<{
+        title: string;
+        description: string;
+        content: string;
+        status: 'draft' | 'published';
+      }>;
+    }) => postRepository.updatePost(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editor-posts'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -120,7 +67,11 @@ export function useEditorViewModel() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deletePost,
+    mutationFn: async (id: string) => {
+      const post = await postRepository.getPostById(id);
+      if (!post) throw new Error('Post not found');
+      return postRepository.deletePost(post.title);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editor-posts'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
@@ -129,7 +80,8 @@ export function useEditorViewModel() {
   });
 
   const publishMutation = useMutation({
-    mutationFn: publishPost,
+    mutationFn: (id: string) =>
+      postRepository.updatePost(id, { status: 'published' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['editor-posts'] });
       queryClient.invalidateQueries({ queryKey: ['posts'] });
